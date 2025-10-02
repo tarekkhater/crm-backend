@@ -1,0 +1,14 @@
+[
+    {
+        "model-name": "Deposit",
+        "resource-file": "deposits.json"
+    },
+    {
+        "model-name": "Package",
+        "resource-file": "packages.json"
+    },
+    {
+        "model-name": "Currency",
+        "resource-file": "currencies.json"
+    }
+]

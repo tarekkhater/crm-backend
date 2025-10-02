@@ -1,0 +1,47 @@
+<?php
+
+namespace App\Rules;
+
+use Illuminate\Contracts\Validation\Rule;
+
+class CheckTypeAgent implements Rule
+{
+    protected $field;
+
+    // Constructor to pass the field name to compare with
+    public function __construct($field)
+    {
+        $this->field = $field;
+    }
+
+    /**
+     * Determine if the validation rule passes.
+     *
+     * @param  string  $attribute
+     * @param  mixed  $value
+     * @return bool
+     */
+    public function passes($attribute, $value)
+    {
+        // Get the value of the other field to compare against
+        $otherValue = request()->input($this->field);
+
+        // Check if the value is the reverse of the other value
+        if($value == 0 && ($this->field==7 || $this->field==8)){
+            return false;
+        }else{
+            return true;
+        }
+        
+    }
+
+    /**
+     * Get the validation error message.
+     *
+     * @return string
+     */
+    public function message()
+    {
+        return 'you have mistake your data.';
+    }
+}
