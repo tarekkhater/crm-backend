@@ -1,0 +1,36 @@
+name: Production Deploy
+
+on:
+  push:
+    branches:
+      - production
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up SSH Key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.EC2_STAGING_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.EC2_STAGING_HOST }} >> ~/.ssh/known_hosts
+
+      - name: SSH into EC2 and Deploy
+        run: |
+          ssh ${{ secrets.EC2_STAGING_USER }}@${{ secrets.EC2_STAGING_HOST }} << 'EOF'
+          cd /home/api/public_html
+          git pull origin staging
+          composer install --no-dev --prefer-dist
+          php artisan migrate
+          php artisan permissions-sync
+          php artisan optimize:clear
+          php artisan optimize
+          sudo service laravel-queue restart
+          sudo service laravel-queue-long restart
+          sudo service laravel-scheduler restart
+          EOF
