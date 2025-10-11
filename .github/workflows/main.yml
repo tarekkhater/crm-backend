@@ -24,10 +24,8 @@ jobs:
         run: |
           ssh ${{ secrets.EC2_STAGING_USER }}@${{ secrets.EC2_STAGING_HOST }} << 'EOF'
           cd /home/api/public_html
-          git pull origin staging
+          git pull origin production
           composer install --no-dev --prefer-dist
-          php artisan migrate
-          php artisan permissions-sync
           php artisan optimize:clear
           php artisan optimize
           sudo service laravel-queue restart
