@@ -28,7 +28,4 @@ jobs:
           composer install --no-dev --prefer-dist --ignore-platform-reqs
           php artisan optimize:clear
           php artisan optimize
-          sudo service laravel-queue restart
-          sudo service laravel-queue-long restart
-          sudo service laravel-scheduler restart
           EOF
