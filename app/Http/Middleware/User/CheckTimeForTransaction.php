@@ -19,7 +19,7 @@ class CheckTimeForTransaction
                 $startTime = Carbon::parse($asset->open_at);
                 $endTime = Carbon::parse($asset->close_at);
             
-                $allowedDays = json_decode($asset->days, true);
+               $allowedDays = json_decode($asset->days, true);
                 $currentDay = strtolower($currentTime->format('l'));
             
                 if (in_array($currentDay, array_map('strtolower', $allowedDays))) {

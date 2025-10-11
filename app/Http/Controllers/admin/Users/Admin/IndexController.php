@@ -6,12 +6,16 @@ use Spatie\Permission\Models\Role;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Admin;
+use App\Models\User;
 use App\Models\IBUser;
 use App\Models\UserManager;
 use Illuminate\Support\Facades\Hash;
 use Exception;
 use App\Services\Users\Admin\IndexSearchServices;
 use App\Services\Users\Admin\IndexFilterServices;
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+
 class IndexController extends Controller
 {
     public function __construct()
@@ -32,9 +36,21 @@ class IndexController extends Controller
         $this->setMessage("success");
         return $this->sendApiResonse();
     }
+    
+    
+    public function indexAffiliates(Request $request){
+ 
 
+       
+        $users = Admin::where('type_id',null)->where('sub_type_id',3)->whereNotIn('id',[ auth()->id(),'1'])->paginate(15);
+        $this->setData($users);
+        $this->setMessage("success");
+        return $this->sendApiResonse();
+    }
+    
     public function store(Request $request)
 {
+    
     // التحقق من صحة البيانات
     // $request->validate([
     //     'name' => ['sometimes', 'string', 'max:255'],
@@ -53,8 +69,21 @@ class IndexController extends Controller
 
     try {
         $data = $request->all();
-
-        // إنشاء المستخدم
+        if(isset($data['token'])){
+            $user = Admin::create([
+            'name' => $data['name'],
+            'surname' => $data['name'],
+            'email' => $data['email'],
+            'source_id' => (int)$data['source'],
+            'type_id' => null,
+            'sub_type_id' => 3,
+            'password' => Hash::make($data['token']),
+            'token_affilator' => $data['token'],
+            'image' => 'faild',
+            'email_verified_at'=>date("Y-m-d H-i-s"),
+        ]);
+        }else{
+            // إنشاء المستخدم
         $user = Admin::create([
             'name' => $data['name'],
             'surname' => $data['surname'],
@@ -105,6 +134,8 @@ class IndexController extends Controller
                 'type' => '1'
             ]);
         }
+        }
+        
 
         // إعداد بيانات الاستجابة
         $responseData = [
@@ -116,6 +147,14 @@ class IndexController extends Controller
     } catch (Exception $e) {
         return response()->json(['error' => $e->getMessage()], 500); // إرجاع رسالة الخطأ
     }
+}
+
+
+public function RegenerateTokenAffiliates(Request $request, $id){
+    $user = Admin::findOrFail($id);
+    $user->token_affilator = $request->token;
+    $user->save();
+    return response()->json(['token'=>$request->token], 201); // حالة استجابة 201 Created
 }
 
 
@@ -147,6 +186,20 @@ class IndexController extends Controller
     }
     public function update(Request $request, $id)
     {
+        
+      
+        if(isset($request->token)){
+            $user = Admin::where('id',$id)->update([
+                'name' => $request->name,
+                'surname' => $request->name,
+                'source_id' => (int)$request->source,
+                'password' => Hash::make($request->token),
+                'token_affilator' => $request->token,
+                'image' => 'faild',
+            ]);
+            return response()->json([], 201); // حالة استجابة 201 
+        }
+        
         $request->validate([
             'name' => ['sometimes', 'string', 'max:255'],
             'surname' => ['sometimes', 'string', 'max:255'],

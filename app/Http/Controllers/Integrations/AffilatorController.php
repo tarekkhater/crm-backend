@@ -55,6 +55,7 @@ class AffilatorController extends Controller
             'Phone'   => 'required|string|unique:users,phone,NULL,id,deleted_at,NULL',
             'Country' => 'required|string|max:2',
             'Source'  => 'nullable|string',
+            'campaign'  => 'nullable|string',
             'ID'      => 'required|integer',
             'Token'   => 'required|string',
         ]);
@@ -80,10 +81,14 @@ class AffilatorController extends Controller
         return response()->json(['message' => 'Unauthorized admin'], 403);
     }
     
-    $country = DB::table('countries')
-             ->where('name', 'like', '%' . $validated['Country'] . '%')
-             ->orWhere('iso3', 'like', '%' . $validated['Country'] . '%')
+        $country = DB::table('countries')
+             ->where('iso', 'like',$validated['Country'])
              ->first();
+        if (!$country) {
+            $country = DB::table('countries')
+                        ->where('name', 'like', '%' . $validated['Country'] . '%')
+                        ->first();
+        }
 
         $lead = Lead::create([
          
@@ -93,12 +98,13 @@ class AffilatorController extends Controller
             'phone'   => $validated['Phone'],
             'country' => $country->id,
             'source'  => $validated['Source'] ?? 'unknown',
+            'campaign'  => $validated['campaign'] ?? 'unknown',
             'type_id'=>2,
             'created_by' =>$admin->id,
         ]);
         
         $lead->userInfo()->create([
-                    'source_id' => Source::where('name',$admin->name)->first()->id,
+                    'source_id' => $admin->source_id,
                     'status_id' =>3,
                     'branch_id' => null,
                     'plan_id' => 4,
@@ -167,6 +173,7 @@ $leads = $query->latest()->get();
                 "country"=> $lead->countries?$lead->countries->name : "no have country",
                 "source"=> $lead->userInfo->source->name ?? 'no status'?? $lead->source,
                 "status"=> $lead->userInfo->status->name ?? 'no status',
+                "campaign"=> $lead->campaign ?? 'no campaign',
             
             ];
         }

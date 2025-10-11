@@ -312,6 +312,8 @@ Route::group(['namespace' => 'App\Http\Controllers\admin'], function () {
             Route::group(['prefix' => 'admins', 'namespace' => 'Admin'], function () {
                 // Route::resource('/',"IndexController");
                 Route::get('/', "IndexController@index");
+                Route::get('/affiliates', "IndexController@indexAffiliates");
+                Route::post('/affiliates/{id}/regenerate-token',"IndexController@RegenerateTokenAffiliates");
                 Route::post('/store', "IndexController@store");
                 Route::post('/destroy', "IndexController@destroy");
                 Route::post('/update/{id}', "IndexController@update");
@@ -520,7 +522,16 @@ Route::group(['namespace' => 'App\Http\Controllers\admin'], function () {
                 Route::get('/', 'IndexController@index');
                 Route::post('/add', 'IndexController@store');
                 Route::get('/show/{id}', 'IndexController@show');
-                Route::post('/edit/{id}', 'IndexController@update');
+                Route::post('/update/{id}', 'IndexController@update');
+                Route::post('/destroy/{id}', 'IndexController@destroy');
+            });
+            
+             Route::group(['prefix' => 'desk', 'namespace' => 'Desk'], function () {
+                Route::resource('/', "IndexController");
+                Route::get('/', 'IndexController@index');
+                Route::post('/add', 'IndexController@store');
+                Route::get('/show/{id}', 'IndexController@show');
+                Route::post('/update/{id}', 'IndexController@update');
                 Route::post('/destroy/{id}', 'IndexController@destroy');
             });
 
@@ -529,7 +540,16 @@ Route::group(['namespace' => 'App\Http\Controllers\admin'], function () {
                 Route::get('/', 'IndexController@index');
                 Route::post('/add', 'IndexController@store');
                 Route::get('/show/{id}', 'IndexController@show');
-                Route::post('/edit/{id}', 'IndexController@update');
+                Route::post('/update/{id}', 'IndexController@update');
+                Route::post('/destroy/{id}', 'IndexController@destroy');
+            });
+            
+             Route::group(['prefix' => 'asset-types', 'namespace' => 'AssetType'], function () {
+                Route::resource('/', "IndexController");
+                Route::get('/', 'IndexController@index');
+                Route::post('/add', 'IndexController@store');
+                Route::get('/show/{id}', 'IndexController@show');
+                Route::post('/update/{id}', 'IndexController@update');
                 Route::post('/destroy/{id}', 'IndexController@destroy');
             });
             

@@ -1,20 +1,20 @@
 <?php
-namespace App\Services\Settings\Sources;
-use App\Models\Source;
+namespace App\Services\Settings\AssetType;
+use App\Models\AssetType;
 use Illuminate\Http\Request;
 class IndexServices{
     public function all(Request $request){
-        $sourcess = Source::all();
+        $sourcess = AssetType::all();
         return $sourcess;
     }
 
     public function show($id){
-        $sources = Source::find($id);
+        $sources = AssetType::find($id);
         return $sources;
     }
 
     public function store($request){
-        $sources = Source::create([
+        $sources = AssetType::create([
             'name' => $request->name,
             'description' => $request->description,
             'status' => $request->status
@@ -22,10 +22,9 @@ class IndexServices{
         return $sources;
     }
     public function update($request,$id){
-        $sources = Source::find($id);
+        $sources = AssetType::find($id);
         $sources->update([
-            'name' => $request->name,
-            'description' => $request->description,
+            'amount' => $request->amount,
             'status' => $request->status
         ]);
         // $sources->syncPermissions($request->permission);
@@ -33,7 +32,7 @@ class IndexServices{
     }
     public function destroy($request){
         return false;
-		$sources = Source::findOrFail($request->id);
+		$sources = AssetType::findOrFail($request->id);
 		$sources->delete();
 		return true;
 	}

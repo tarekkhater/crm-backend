@@ -479,6 +479,10 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
                     $items = explode(',', (string) $value);
                     $query->whereIn('country',$items);
                     break;
+                 case 'campaign':
+                    $items = explode(',', (string) $value);
+                    $query->whereIn('source', $items);
+                    break;
                 case 'no_of_logins':
                 case 'block':
                     $query->where($field, $value);
@@ -588,6 +592,18 @@ public function scopeCustomSort($query, $sortBy = 'id', $sortDirection = 'desc')
                             ->limit(1)
                     ])
                     ->orderBy('sort_country', $sortDirection);
+                    
+                    case 'last_comment':
+            // Sort by the latest agent note date
+            return $query->addSelect([
+                        'sort_last_comment' => DB::table('agent_notes')
+                            ->select('created_at')
+                            ->whereColumn('user_id', 'users.id')
+                            ->orderBy('created_at', 'desc')
+                            ->limit(1)
+                    ])
+                    ->orderBy('sort_last_comment', $sortDirection);
+
 
         case 'surname':
         case 'email':
@@ -611,7 +627,7 @@ public function scopeCustomSort($query, $sortBy = 'id', $sortDirection = 'desc')
     public function scopeLeadsFilter(Builder $query, array $userFilters = [], array $tradeFilters = [], $managerIds = null)
     {
         Log::info($tradeFilters);
-        return $query->ofType([1, 2])
+        return $query->ofType([2])
                     ->filterBySearch($userFilters)
                     ->filterByTradeInfo($tradeFilters)
                     ->filterByManager($managerIds)
@@ -647,9 +663,9 @@ public function scopeCustomSort($query, $sortBy = 'id', $sortDirection = 'desc')
      */
     public function scopePotentialCustomers(Builder $query, array $userFilters = [], array $tradeFilters = [], $managerIds = null)
     {
-        return $query->ofType(2)
+        return $query->ofType(1)
                     ->filterBySearch($userFilters)
-                    ->filterByTradeInfo($tradeFilters, [['status_id', '=', 4]])
+                    ->filterByTradeInfo($tradeFilters, [])
                     ->filterByManager($managerIds);
     }
 
@@ -742,7 +758,18 @@ public function scopeCustomSort($query, $sortBy = 'id', $sortDirection = 'desc')
                     $q->where($tradeField, '<=', $endDate);
                 }
             });
-        } else {
+        } elseif ($field === 'last_comment') {
+            // Handle last_comment field (from agent_notes table)
+            $query->whereHas('agentNotes', function ($q) use ($startDate, $endDate) {
+                if ($startDate && $endDate) {
+                    $q->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59']);
+                } elseif ($startDate) {
+                    $q->where('created_at', '>=', $startDate . ' 00:00:00');
+                } elseif ($endDate) {
+                    $q->where('created_at', '<=', $endDate . ' 23:59:59');
+                }
+            });
+        }else {
             // Try to apply the filter to the users table as fallback
             if ($startDate && $endDate) {
                 $query->whereBetween("users.{$field}", [$startDate, $endDate]);

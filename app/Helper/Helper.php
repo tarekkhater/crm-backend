@@ -124,7 +124,12 @@ if (!function_exists('getUsersIds')) {
     {
         $ids = [];
         if (auth()->user()->type_id == 3) {
-            $ids = User::select()->pluck('id');
+            if(auth()->user()->sub_type_id == 4){
+                $idss = Admin::where('desk_id',auth()->user()->desk_id)->pluck('id');  
+                $ids = AssignUserManager::whereIn('admin_id', $idss)->pluck('user_id');
+            }else{
+                $ids = User::select()->pluck('id');
+            }
         } else if (auth()->user()->type_id == 5) {
             $ids = User::where('broker_id', auth()->user()->id)->pluck('id');
             // $ids = IBClient::where('ib_id',auth()->user()->id)->pluck('user_id');
@@ -150,7 +155,12 @@ if (!function_exists('getTeamLeaderIds')) {
         if (auth()->user()->type_id == 5) {
             $ids = Admin::where('broker_id', auth()->user()->id)->pluck('id');
         } else {
-            $ids = Admin::select('id', 'name')->pluck('id');
+             if (auth()->user()->type_id == 3 && auth()->user()->sub_type_id == 4) {
+                 $ids = Admin::select('id', 'name')->where('desk_id',auth()->user()->desk_id)->pluck('id');
+             }else{
+                 $ids = Admin::select('id', 'name')->pluck('id');
+             }
+            
         }
         return  $ids;
     }
@@ -162,7 +172,11 @@ if (!function_exists('getAgentsIds')) {
     {
         $ids = [];
         if (auth()->user()->type_id == 3) {
-            $ids = Admin::select()->pluck('id');
+            if(auth()->user()->sub_type_id == 4){
+                $ids = Admin::where('desk_id',auth()->user()->desk_id)->pluck('id');   
+            }else{
+                $ids = Admin::select()->pluck('id');   
+            }
         } else if (auth()->user()->type_id == 5) {
             $idsTeamLeader = Admin::where('broker_id', auth()->user()->id)->whereIn('type_id', [7, 8])->pluck('id');
             $ids = UserManager::where('admin_id', $idsTeamLeader)->where('type', '0')->pluck('user_id');

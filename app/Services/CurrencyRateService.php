@@ -134,7 +134,6 @@ private function getBulkStocksRates($currencies)
                 $rate = cache("stock_price_{$currency->sym}", 0);
                 $rates[] = $this->formatRate($currency, $rate);
             }
-            Log::info("STOCKS RATES: " . json_encode($rates));
             return $rates;
         }
 
@@ -151,7 +150,6 @@ private function getBulkStocksRates($currencies)
                 }
             }
         });
-        Log::info("STOCKS responses: " . json_encode($responses));
         $responseIndex = 0;
         foreach ($chunks as $chunk) {
             foreach ($chunk as $symbol) {
@@ -190,7 +188,6 @@ private function getBulkStocksRates($currencies)
             $rates[] = $this->formatRate($currency, $rate);
         }
     }
-    Log::info("STOCKS RATES: " . json_encode($rates));
     return $rates;
 }
 
@@ -291,15 +288,15 @@ private function getBulkStocksRates($currencies)
     
      public function calculateBuyPrice($currentPrice,$sell_spreads){
        
-    if((float) $sell_spreads > 0){
-        $sell_spread = floatval(($sell_spreads * $currentPrice) / 100);
-        $s_price = floatval($currentPrice) - floatval($sell_spread);
-        return $this->truncate_number($s_price, 4);
-    }
-     return $this->truncate_number($currentPrice, 4);
+        if((float) $sell_spreads > 0){
+            $sell_spread = floatval(($sell_spreads * $currentPrice) / 100);
+            $s_price = floatval($currentPrice) - floatval($sell_spread);
+            return $this->truncate_number($s_price, 4);
+        }
+        return $this->truncate_number($currentPrice, 4);
     }
 
-     public function calculateSellPrice($currentPrice,$buy_spreads){
+    public function calculateSellPrice($currentPrice,$buy_spreads){
         if((float) $buy_spreads > 0){
             $buy_spread = floatval(($buy_spreads * $currentPrice) / 100);
             $b_price = floatval($currentPrice) + floatval($buy_spread);
@@ -310,7 +307,6 @@ private function getBulkStocksRates($currencies)
     }
     
     function truncate_number($number, $decimals = 2) {
-        
         $factor = pow(10, $decimals);
         return floor($number * $factor) / $factor;
     }

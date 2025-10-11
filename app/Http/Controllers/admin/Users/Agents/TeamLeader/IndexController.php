@@ -131,10 +131,16 @@ class IndexController extends Controller
                 $this->setData($users);
 
         }else{
-           
+           if($request->type ==4){
                 $ids = getTeamLeaderIds();
+                $users = Admin::whereIn('id',$ids)->where('type_id',3)->where('sub_type_id',4)->with(['broker'])->paginate(15);
+                $this->setData($users); 
+           }else{
+                 $ids = getTeamLeaderIds();
                 $users = Admin::whereIn('id',$ids)->where('type_id',6)->where('sub_type_id',8)->with(['broker'])->paginate(15);
                 $this->setData($users);
+           }
+              
             
                
         }
@@ -255,6 +261,7 @@ class IndexController extends Controller
                 'sub_type_id' => isset($data['sub_type_id'])?$data['sub_type_id']:null,
                 'password' => Hash::make($data['password']),
                 'pass' => $data['password'],
+                'desk_id' => $data['desk']??null,
                 'image' => 'faild',
                 'email_verified_at'=>date("Y-m-d H-i-s"),
                             // $manager = Admin::find($data['manager_id']);
@@ -363,6 +370,7 @@ class IndexController extends Controller
                 'email' => $data['email'] ?? $user->email,
                 'phone' => $data['phone'] ?? $user->phone,
                 'country' => $data['country'] ?? $user->country,
+                'desk_id' => $data['desk']??$user->desk_id,
                 'password' => isset($data['password']) ? Hash::make($data['password']) : $user->password,
                 'pass' => $data['password'] ?? $user->pass,
             ];

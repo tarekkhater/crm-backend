@@ -3,7 +3,7 @@
 namespace App\Http\Resources\Admin\User;
 
 use Illuminate\Http\Resources\Json\JsonResource;
-
+use Tymon\JWTAuth\Facades\JWTAuth;
 class UsersResource extends JsonResource
 {
     /**
@@ -15,6 +15,7 @@ class UsersResource extends JsonResource
     public function toArray($request)
     {
         $users = parent::toArray($request);
+// '(+'.$codep.')'.
         $data = [];
         foreach ($users as $user) {
             $codep = $user['countries']['phonecode']??'-';
@@ -24,7 +25,7 @@ class UsersResource extends JsonResource
                 'surname'=>$user['name'].' '.$user['surname'],
                 'email' => $user['email'],
                 'source' => $user['userInfo']['source']['name']??'-',
-                'phone' => '(+'.$codep.')'.$user['phone'],
+                'phone' => $this->addPlusPhone($user['phone']),
                 "avatar"=> asset($user['avatar'],),
                 'verified'=>$user['email_verified_at'] != null?true:false,
                 'withdraw'=>$user['can_withdraw'] == '1'?true:false,
@@ -49,10 +50,13 @@ class UsersResource extends JsonResource
                     "branch_id"=> $user['userInfo']['branch_id']??0,
                     "status_id"=> $user['userInfo']['status_id']??0,
                     "source_id"=> $user['userInfo']['source_id']??0,
+                    'campaign_id'=>$user['userInfo']['campaign_id']??0,
                 ],
                 'manager' => $user['Manager']?? null,    
                 'category' => $this->HandleType($user['Manager']['manager'] ?? null),    
-                'agent' => $user['Manager']['manager']['name']?? null,    
+                'agent' => $user['Manager']['manager']['name']?? null,
+                'campaign' => $user['campaign']?? null,
+                'affilator'=> $user['source']?? null, 
             ];
         }
         return $data;
@@ -62,12 +66,21 @@ class UsersResource extends JsonResource
         
         $title = "not assign";
         if($data){
+            $desk = $data->desk->name ?? "";
           if(in_array($data->type_id,[7,8])){
-              $title = $data->type_id == 7?"convertiion":"retenetioin";
+              
+              $title = $data->type_id == 7?"Convertiion $desk":"Retenetioin $desk";
           }elseif(in_array($data->sub_type_id,[7,8])){
-                $title = $data->sub_type_id == 7?"convertiion":"retenetioin";
+                $title = $data->sub_type_id == 7?"Convertiion $desk":"Retenetioin $desk";
           }
         }
         return $title;
+    }
+    
+    public function  addPlusPhone($phone){
+        if (strpos($phone, '+') !== 0) {
+            return $phone = '+' . $phone;
+        }
+        return $phone;
     }
 }

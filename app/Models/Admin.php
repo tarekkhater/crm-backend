@@ -28,17 +28,19 @@ class Admin extends Authenticatable implements MustVerifyEmail, JWTSubject
         'surname',
         'country',
         'manager_id','phone',
-        'is_active',
+        'is_active','desk_id',
         'status',
         'broker_id',
         'type_id',
         'email_verified_at',
-        'sub_type_id'
+        'sub_type_id','token_affilator','source_id'
     ];
     protected $hidden = [
         'password',
         'remember_token',
     ];
+    
+    protected $with = ['source','desk'];
 
 
     public static function ids(){
@@ -80,6 +82,10 @@ class Admin extends Authenticatable implements MustVerifyEmail, JWTSubject
 
     public function Integration(){
         return $this->hasOne(Integration::class, 'user_id');
+    }
+    
+    public function source(){
+        return $this->belongsTo(Source::class, 'source_id');
     }
 
     public function IB(){
@@ -128,6 +134,11 @@ class Admin extends Authenticatable implements MustVerifyEmail, JWTSubject
     
     public static function hasPermission(){
         
+    }
+    
+    
+    public function desk() {
+        return $this->belongsTo(Desk::class);
     }
 
 

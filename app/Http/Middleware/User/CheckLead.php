@@ -20,23 +20,24 @@ class CheckLead
     public function handle(Request $request, Closure $next)
     {
         
-        // $request->validate([
-        //     'email'=>['sometime','email','exists:users,email'],
-        //      "token" => "sometime|string",
-        // ]);
+        $request->validate([
+            'email'=>['sometimes','email','exists:users,email'],
+             "token" => "sometimes|string",
+        ]);
         
-        // $user = User::where('email',$request->input('email'))->first(); // Check body, then query string
-        // if(isset($request->token)){
-        //      $user = JWTAuth::setToken($request->token)->toUser();
-            
-        // }
-        // if($user->type_id == 1){
-        //     $response = [
-        //         "message"   =>"NOT Have Account ",
-        //         "status"=>422,
-        //     ];
-        //   return throw new HttpResponseException(response()->json($response, 422));
-        // }
+        if(isset($request->token)){
+             $user = JWTAuth::setToken($request->token)->toUser();
+        }else{
+            $user = User::where('email',$request->input('email'))->first();
+        }
+        
+        if($user->type_id == 1){
+            $response = [
+                "message"   =>"NOT Have Account ",
+                "status"=>422,
+            ];
+          return throw new HttpResponseException(response()->json($response, 422));
+        }
         // $user = Auth::user('apiUser');
         // $user->load('userInfo');
         // if($user->user_info->balance == $amount){

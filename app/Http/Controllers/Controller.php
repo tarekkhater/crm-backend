@@ -135,10 +135,30 @@ class Controller extends BaseController
            
     }
 
-    private function getStock($sym){
-            $response = Http::get('https://query1.finance.yahoo.com/v8/finance/chart/'.$sym.'?interval=1m');
-            return $jsonData = $response->json()['chart']['result'][0]['meta']['regularMarketPrice'];
+    private function getStock($sym)
+{
+    if (cache()->has("stock_price_{$sym}")) {
+        return cache("stock_price_{$sym}");
     }
+
+    $response = Http::get("https://query1.finance.yahoo.com/v8/finance/chart/{$sym}?interval=1m");
+
+    if (!$response->successful()) {
+        return cache("stock_price_{$sym}", 0);
+    }
+
+    $jsonData = $response->json();
+
+    if (isset($jsonData['chart']['result'][0]['meta']['regularMarketPrice'])) {
+        $price = $jsonData['chart']['result'][0]['meta']['regularMarketPrice'];
+
+        cache(["stock_price_{$sym}" => $price], now()->addMinutes(1));
+
+        return $price;
+    }
+
+    return cache("stock_price_{$sym}", 0);
+}
 
     private function getIndices($sym, $base){
   

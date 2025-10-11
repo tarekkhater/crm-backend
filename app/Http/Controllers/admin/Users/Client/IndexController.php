@@ -293,6 +293,7 @@ class IndexController extends Controller
 
 
      public function import(Request $request){
+         
         $request->validate([
             'file' => 'required|mimes:xlsx,xls,csv|mimetypes:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv|max:2048',
         ]);

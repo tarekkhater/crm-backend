@@ -215,7 +215,7 @@ class IndexController extends Controller
                     'amount' => $data['amount'],
                     'message' => $note,
                     'currency'=>$user->userInfo->cur,
-                    'status'=>1,
+                    'status'=>0,
                 ]);
             }else{
                 $this->setMessage("You Dont Hava balance to Continue");

@@ -42,8 +42,8 @@ class IndexController extends Controller
             foreach($withdrawals as $withdrawal){
                 $transactions['data'][]=[
                     'id'=>$withdrawal->id,
-                    'note'=>"withdrawl",
-                    'type'=>"withdrawl",
+                    'note'=>$withdrawal->account_type != null?$withdrawal->account_type:"Withdrawl",
+                    'type'=>"Awaiting For Withdrawl",
                     'amount'=>$withdrawal->amount,
                     'account_type'=>"withdrawl",
                     'direction'=>$withdrawal->type,
