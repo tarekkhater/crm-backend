@@ -34,57 +34,59 @@ class UserClientImport implements ToCollection, WithHeadingRow
     public function collection(Collection $rows)
     {
         foreach ($rows as $row) {
-            try {
+            // try {
             $user =  User::where('email',$row['email'])->first();
+            // $user->phone = $row['phone'];
+            // $user->save();
             $country = DB::table('countries')
              ->where('name', 'like', '%' . $row['country'] . '%')
              ->first();
              
-            $sources = DB::table('sources')
-             ->where('name', 'like', '%' . $row['source'] . '%')
-             ->first();
+            // $sources = DB::table('sources')
+            //  ->where('name', 'like', '%' . $row['source'] . '%')
+            //  ->first();
              
-              $statuses = DB::table('statuses')
-             ->where('name', 'like', '%' . $row['status'] . '%')
-             ->first();
-                if(!$user){
+            //   $statuses = DB::table('statuses')
+            //  ->where('name', 'like', '%' . $row['status'] . '%')
+            //  ->first();
+                // if(!$user){
                   $user = User::create([
-                        'name' => $row['name'],
+                        'name' => $row['name']??" ",
                         'surname' => $row['surname'],
                         'email' => $row['email'],
                         'phone' => $row['phone'],
-                        'country' => $country->id ?? $row['country'] ,
+                        'country' => $country->id??$row['country'] ,
                         'address' => $row['address']??$row['country'],
                         'offer_name' => $row['offer_name']??"",
-                        'type_id'=>2,
+                        'type_id'=>$this->type,
                     ]);
                 $user->userInfo()->create([
-                     'source_id' => $sources->id,
-                    'status_id' =>$statuses->id,
+                     'source_id' => 0,
+                    'status_id' =>3,
                     'branch_id' => null,
                     'plan_id' => null,
                     'profit' =>  '0',
                     'fee' => '0',
                 ]);
-                    $role = Role::find(8);
-                    $user->assignRole($role);
+                    // $role = Role::find(8);
+                    // $user->assignRole($role);
         
-            $manager = Admin::find(145);
-            $user->Manager()->create([
-                'admin_id'=>(int)$manager->id,
-            ]);
-            if($manager->broker_id > 0 ){
-                $user->broker_id = $manager->broker_id;
-                $user->save();
-            }
-                }  
-            } catch (\Exception $e) {
-                // Log specific row errors
-                Log::error("Error importing user on row:", [
-                    'row' => $row,
-                    'error' => $e->getMessage()
-                ]);
-            }
+            // $manager = Admin::find(145);
+            // $user->Manager()->create([
+            //     'admin_id'=>(int)$manager->id,
+            // ]);
+            // if($manager->broker_id > 0 ){
+            //     $user->broker_id = $manager->broker_id;
+            //     $user->save();
+            // }
+                // }  
+            // } catch (\Exception $e) {
+            //     // Log specific row errors
+            //     Log::error("Error importing user on row:", [
+            //         'row' => $row,
+            //         'error' => $e->getMessage()
+            //     ]);
+            // }
         }
     }
 

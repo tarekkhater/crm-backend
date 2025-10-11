@@ -38,9 +38,9 @@ class StoreRequest extends FormRequest
                 'regex:/[@$!%*?&]/', // At least one special character
              ], // At least one special character,
             'confirm_password'=>'required|same:password',
-            'type_id'=>['required','in:6,7,8'], //['teamleader','sales','retenation']
-            'role'=>['required','in:4,6,5'], //['teamleader','agent']
-            'sub_type_id'=>['required','in:0,7,8',new CheckTypeAgent('type_id')],
+            'type_id'=>['required','in:3,6,7,8'], //['teamleader','sales','retenation']
+            'role'=>['required','in:347,4,6,5'], //['teamleader','agent']
+            'sub_type_id'=>['required','in:4,0,7,8',new CheckTypeAgent('type_id')],
         ];
     }
 

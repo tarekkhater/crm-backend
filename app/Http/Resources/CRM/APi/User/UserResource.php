@@ -8,6 +8,7 @@ use App\Models\Trade;
 use App\Models\TypeUser;
 use App\Models\Favourite;
 use App\Models\User;
+use Tymon\JWTAuth\Facades\JWTAuth;
 use DB;
 class UserResource extends JsonResource
 {
@@ -25,14 +26,19 @@ class UserResource extends JsonResource
         $value = parent::toArray($request);
        $prevId = User::whereNull('deleted_at')
     ->where('id', '>', $value['id'])
+    ->where('type_id',$value['type_id'])
     ->orderBy('id', 'asc')
     ->first();
 
  $nextId = User::whereNull('deleted_at')
     ->where('id', '<', $value['id'])
+    ->where('type_id',$value['type_id'])
     ->orderBy('id', 'desc')
     ->first();
-
+$user = $this->resource;
+        $token = JWTAuth::fromUser($user);
+        $autoLoginUrl = "https://trade.quantumprime.app/login?token=$token";
+        
         $result = [
             'verified'=>$value['email_verified_at'] != null?true:false,
                 'withdraw'=>$value['can_withdraw'] == '1'?true:false,
@@ -40,6 +46,9 @@ class UserResource extends JsonResource
                  'allow_trade_after_hours'=>$value['allow_trade_after_hours'] == '1'?true:false,
                 'online'=>$value['no_of_logins']== '1'?1:0,];
        $result['id']= $value['id'];
+       $result['login_url']= $autoLoginUrl;
+       $result['auth_show'] = auth()->check() && in_array(auth()->user()->type_id, [3, 6]);
+       
        $result['name']= $value['name'].' '.$value['surname'];
        $result['image']= $value['avatar'];
         $result['next_id']= $nextId->id ?? null;
@@ -102,7 +111,7 @@ class UserResource extends JsonResource
             // $value['user_info']['bonus']
  
             $result['wallet'] =  [
-                'actual'=>$value['user_info']['money'],
+                'awaiting'=>$value['user_info']['awaiting_deposit'],
                 'trading'=>$value['user_info']['balance'],
             ];
             return $result;

@@ -21,7 +21,7 @@ class IndexServices{
         if ($request->has('icon')) {
             $createData['icon'] = $request->icon;
         }
-        $statuss = Status::create($createData);
+        // $statuss = Status::create($createData);
     return $statuss;
     }
     public function update($request, $id){
@@ -50,7 +50,7 @@ class IndexServices{
             return false; // أو throw new Exception("Status not found");
         }
 
-        $status->delete();
+        Status::where('id',$id)->delete();
         return true; // إرجاع نجاح العملية
     }
 }

@@ -29,7 +29,7 @@ class IndexFilterServices extends Controller
             case 1:
                 return $this->potinal($request);    
             case 2:
-                return $this->Active($request);    
+                return $this->leads($request); 
             case 5:
                 return $this->publicCustomer($request);    
             case 9:
@@ -177,7 +177,7 @@ class IndexFilterServices extends Controller
             foreach($request->search as $req) {
                 if($req['value'] != 0) {
                     // User table fields
-                    if(in_array($req['key'], ['no_of_logins', 'block', 'manager_id', 'country', 'email', 'name'])) {
+                    if(in_array($req['key'], ['no_of_logins', 'block', 'manager_id', 'country', 'email', 'name' , 'campaign'])) {
                         if($req['key'] == 'manager_id' && $req['value'] != 0) {
                             $managerIds = AssignUserManager::whereIn('admin_id', $this->explodedata($req['value']))->pluck('user_id')->toArray();
                             if(empty($managerIds)) {

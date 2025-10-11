@@ -64,6 +64,7 @@ class indexController extends Controller
             'stop_loss_price' => 'nullable|numeric',
             'take_profit_price' => 'nullable|numeric',
         ]);
+        
          $data['user_id'] = AuthApi()->id;
          
         $data = $this->seviceTrade->createTrade($data);
@@ -748,7 +749,7 @@ return "4";
         $profit = $pnl;
         $bal = $this->user->userInfo->balance;
         $equity = ($profit) + $bal;
-        $total_deposit = Deposit::where('user_id',$this->user->id)->Where('type','Awaiting Deposit')->sum('amount');
+        $total_deposit = $this->user->userInfo->awaiting_deposit;
          $trades = $this->seviceTrade->index([auth()->user()->id]);
         $response = PositionResource::collection($trades)->additional([
             "header"=>[

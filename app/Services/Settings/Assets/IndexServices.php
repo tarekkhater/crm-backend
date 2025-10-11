@@ -42,7 +42,45 @@ class IndexServices{
     }
 
     public function store($request){
-        $Currencys = CurrencyPair::create($request->all());
+        $data = $request->all();
+        if( !$request->days || $request->days == null ){
+            switch ($request->type) {
+                case 'stocks':
+                    $defaultDays = ["Monday","Tuesday","Wednesday","Thursday","Friday"];
+                    $open_at = "15:00:00";
+                    $close_at = "22:00:00";
+                    break;
+                case 'crypto':
+                    $defaultDays = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+                    $open_at = "00:00:00";
+                    $close_at = "23:59:59";
+                    break;
+                case 'commodities':
+                    $defaultDays = ["Monday","Tuesday","Wednesday","Thursday","Friday"];
+                    $open_at = "00:00:00";
+                    $close_at = "23:59:59";
+                    break;
+                case 'indices':
+                    $defaultDays = ["Monday","Tuesday","Wednesday","Thursday","Friday"];
+                    $open_at = "09:30:00";
+                    $close_at = "22:00:00";
+                    break;
+                case 'forex':
+                    $defaultDays = ["Monday","Tuesday","Wednesday","Thursday","Friday"];
+                    $open_at = "00:00:00";
+                    $close_at = "23:59:59";
+                    break;
+                default:
+                    $defaultDays = ["Monday","Tuesday","Wednesday","Thursday","Friday"];
+                    $open_at = "00:00:00";
+                    $close_at = "23:59:59";
+                    break;
+            }
+            $data['open_at'] = $open_at;
+            $data['close_at'] = $close_at;
+            $data['days'] = json_encode($defaultDays);
+        }
+        $Currencys = CurrencyPair::create($data);
          if(isset($request->image)){
             $Currencys->image = $this->uploadRealImage($request->image, 'Assets');
             $Currencys->save();

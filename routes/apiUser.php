@@ -755,7 +755,7 @@ Route::group(['middleware'=>['check.system.status','cors'],'namespace'=>'App\Htt
         Route::post('/verification', "VerificationController@index")->middleware(['CheckOtpEmailVerified']);
         Route::post('/resend', "VerificationController@resend")->middleware(['CheckOtpEmailVerified','throttle:6,1']);
         Route::get('/check/token',"LoginController@CheckToken");
-        Route::get('/autologin', "LoginController@autoLogin");
+        Route::get('/autologin', "LoginController@autoLogin")->middleware(['CheckLead']);
 
 
         Route::group(['prefix' => 'forget/password'], function() {

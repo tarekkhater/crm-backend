@@ -357,8 +357,8 @@ public function ExportLeads(Request $request)
         foreach($wallets->items() as $value){
             $data['data'][] = [
                 'id'=>$value->id,
-                "from"=>$value->from=="1"?"Actual Wallet":"Trading Wallet",
-                "to"=> $value->to=="1"?"Actual Wallet":"Trading Wallet",
+                "from"=>$value->from=="1"?"Awaiting Deposit":"Trading Wallet",
+                "to"=> $value->to=="1"?"Awaiting Deposit":"Trading Wallet",
                 "amount"=> $value->amount,
                "cur"=>$this->user->userInfo->cur ??"eg",
                 'date'=>date('Y M d',strtotime($value->created_at)),
@@ -924,11 +924,56 @@ public function updateTrade($id){
     public function balance(Request $request,$id){
        
         $user = InfoTradeUser::where('user_id',$id)->first();
-        $user->balance=$request->balance; 
-       $user->save();
+        // if($request->type == "awaiting"){
+        //     if($request->balance < 0 ){
+              
+        //         $wallet = Wallet::where('id', $request->id)->first();
+        //         $wallet->status = 1;
+        //         $wallet->save();
+        //         $user->awaiting_deposit=$request->balance;
+        //         $user->balance += $request->balance;
+        //     }else{
+        //         Wallet::create([
+        //             "user_id"=>$user->user_id,
+        //             "from"=>"1",
+        //             "to"=>"1",
+        //             "amount"=> $request->balance,
+        //             "cur"=>$user->cur,
+        //             'date'=>now(),
+        //             "status"=> NULL,    
+        //         ]);
+        //         $user->awaiting_deposit+=$request->balance;
+        //         $user->balance += $request->balance;
+        //     }
+           
+        // }else{
+        //  $user->balance=$request->balance;  
+        // }
+        if($request->type == "awaiting"){
+            if($user->awaiting_deposit > 0 ){
+                if($request->balance > $user->awaiting_deposit  ){
+                    $user->balance += ($request->balance - $user->awaiting_deposit);
+                    $user->awaiting_deposit=$request->balance;
+                }else{
+                    $user->balance -= ($user->awaiting_deposit - $request->balance);
+                    $user->awaiting_deposit=$request->balance;
+                }
+                
+            }else{
+                $user->awaiting_deposit=$request->balance;
+                $user->balance += $request->balance;
+            }
+           
+        }else{
+         $user->balance=$request->balance;  
+        }
+        
+        $user->save();
          $this->setMessage("success");
         return $this->sendApiResonse();
     }
+    
+    
  function truncate_number($number, $decimals = 2) {
     $factor = pow(10, $decimals);
     return floor($number * $factor) / $factor;

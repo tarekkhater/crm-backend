@@ -1,10 +1,11 @@
 <?php
 namespace App\Services\Settings\Campaigns;
 use App\Models\Campaign;
+use App\Models\User;
 use Illuminate\Http\Request;
 class IndexServices{
     public function all(Request $request){
-        $campaigns = Campaign::all();
+        $campaigns = User::pluck('source')->unique()->values();
         return $campaigns;
     }
 
