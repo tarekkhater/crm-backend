@@ -154,8 +154,8 @@ Route::group(['namespace' => 'App\Http\Controllers\admin'], function () {
                 Route::post('/status', "IndexController@statusDeposit");
             });
 
-            Route::group(['prefix' => 'trading/hourse', 'namespace' => 'TradingHourse'], function () {
-                Route::resource('/', "IndexController");
+            Route::group(['prefix' => 'trading', 'namespace' => 'TradingHourse'], function () {
+                Route::resource('hourse', "IndexController");
             });
 
 
