@@ -37,7 +37,12 @@ jobs:
           echo "🔄 Pulling latest code..."
           git fetch origin production
           git reset --hard origin/production
+          composer install --no-dev --prefer-dist
           
+          sudo service laravel-queue restart
+          sudo service laravel-queue-long restart
+          sudo service laravel-scheduler restart
+         
          
           
           echo "✅ Deployment completed successfully!"
