@@ -39,9 +39,11 @@ jobs:
           git reset --hard origin/production
           composer install --no-dev --prefer-dist --ignore-platform-req=ext-zip --ignore-platform-reqs
           
-          sudo service laravel-queue restart
-          sudo service laravel-queue-long restart
-          sudo service laravel-scheduler restart
+          php artisan config:clear
+          php artisan cache:clear 
+          php artisan view:clear 
+          php artisan route:clear 
+          php artisan optimize
          
          
           
