@@ -5,7 +5,7 @@ use Illuminate\Console\Command;
 use WebSocket\Client;
 use App\Events\CurrencyRateUpdated;
 
-class BinanceStreamCommand extends Command
+class BinancePriceStream extends Command
 {
     protected $signature = 'binance:stream {symbols*}';
     protected $description = 'Stream Binance prices for multiple symbols';

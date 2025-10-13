@@ -1,0 +1,27 @@
+[20-Jan-2022 11:06:56 UTC] PHP Warning:  require(/home/webservices/public_html/vendor/composer/../symfony/deprecation-contracts/function.php): Failed to open stream: No such file or directory in /home/webservices/public_html/vendor/composer/autoload_real.php on line 71
+[20-Jan-2022 11:06:56 UTC] PHP Fatal error:  Uncaught Error: Failed opening required '/home/webservices/public_html/vendor/composer/../symfony/deprecation-contracts/function.php' (include_path='.:/opt/cpanel/ea-php80/root/usr/share/pear') in /home/webservices/public_html/vendor/composer/autoload_real.php:71
+Stack trace:
+#0 /home/webservices/public_html/vendor/composer/autoload_real.php(61): composerRequire8cded9a81f93295d1bfdf7a53845473d('6e3fae29631ef28...', '/home/webservic...')
+#1 /home/webservices/public_html/vendor/autoload.php(7): ComposerAutoloaderInit8cded9a81f93295d1bfdf7a53845473d::getLoader()
+#2 /home/webservices/public_html/public/index.php(34): require('/home/webservic...')
+#3 {main}
+  thrown in /home/webservices/public_html/vendor/composer/autoload_real.php on line 71
+[20-Jan-2022 11:07:00 UTC] PHP Warning:  include(/home/webservices/public_html/vendor/composer/../psr/log/Psr/Log/LoggerInterface.php): Failed to open stream: No such file or directory in /home/webservices/public_html/vendor/composer/ClassLoader.php on line 444
+[20-Jan-2022 11:07:00 UTC] PHP Warning:  include(): Failed opening '/home/webservices/public_html/vendor/composer/../psr/log/Psr/Log/LoggerInterface.php' for inclusion (include_path='.:/opt/cpanel/ea-php80/root/usr/share/pear') in /home/webservices/public_html/vendor/composer/ClassLoader.php on line 444
+[20-Jan-2022 11:07:00 UTC] PHP Fatal error:  Uncaught Error: Interface "Psr\Log\LoggerInterface" not found in /home/webservices/public_html/vendor/laravel/framework/src/Illuminate/Log/LogManager.php:22
+Stack trace:
+#0 /home/webservices/public_html/vendor/composer/ClassLoader.php(444): include()
+#1 /home/webservices/public_html/vendor/composer/ClassLoader.php(322): Composer\Autoload\includeFile('/home/webservic...')
+#2 /home/webservices/public_html/vendor/laravel/framework/src/Illuminate/Log/LogServiceProvider.php(17): Composer\Autoload\ClassLoader->loadClass('Illuminate\\Log\\...')
+#3 /home/webservices/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(873): Illuminate\Log\LogServiceProvider->Illuminate\Log\{closure}(Object(Illuminate\Foundation\Application), Array)
+#4 /home/webservices/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(758): Illuminate\Container\Container->build(Object(Closure))
+#5 /home/webservices/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(851): Illuminate\Container\Container->resolve('log', Array, true)
+#6 /home/webservices/public_html/vendor/laravel/framework/src/Illuminate/Container/Container.php(694): Illuminate\Foundation\Application->resolve('log', Array)
+#7 /home/webservices/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Application.php(836): Illuminate\Container\Container->make('log', Array)
+#8 /home/webservices/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Exceptions/Handler.php(242): Illuminate\Foundation\Application->make('log')
+#9 /home/webservices/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(415): Illuminate\Foundation\Exceptions\Handler->report(Object(Error))
+#10 /home/webservices/public_html/vendor/laravel/framework/src/Illuminate/Foundation/Http/Kernel.php(113): Illuminate\Foundation\Http\Kernel->reportException(Object(Error))
+#11 /home/webservices/public_html/public/index.php(52): Illuminate\Foundation\Http\Kernel->handle(Object(Illuminate\Http\Request))
+#12 {main}
+  thrown in /home/webservices/public_html/vendor/laravel/framework/src/Illuminate/Log/LogManager.php on line 22
+[08-Mar-2022 21:33:44 Europe/London] PHP Fatal error:  Cannot use App\Models\User as User because the name is already in use in /home/cyhqgccx/webon.webfinfx.com/app/Http/Controllers/WithdrawalController.php on line 10
