@@ -1,4 +1,4 @@
-name: Production Deploy
+name: USERBBSBACKEND
 
 on:
   push:
@@ -12,20 +12,33 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          repository: amrgamal194/user-bbs-backend  # Adjust if repo name differs
+          ssh-key: ${{ secrets.SERVER_SSH_KEY }}  # SSH key for cloning repo
+
 
       - name: Set up SSH Key
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_KEY }}
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.EC2_STAGING_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -H ${{ secrets.EC2_STAGING_HOST }} >> ~/.ssh/known_hosts
-
-      - name: SSH into EC2 and Deploy
+          ssh-keyscan -H $SERVER_HOST >> ~/.ssh/known_hosts
+      - name: Deploy to Server
+        env:
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
         run: |
-          ssh ${{ secrets.EC2_STAGING_USER }}@${{ secrets.EC2_STAGING_HOST }} << 'EOF'
-          cd /home/api/public_html
-          git pull origin production
-          composer install --no-dev --prefer-dist --ignore-platform-reqs
-          php artisan optimize:clear
-          php artisan optimize
+          ssh $SERVER_USER@$SERVER_HOST << 'EOF'
+          set -e  # stop if any command fails
+          cd /home/api/public_html || exit
+          echo "🔄 Pulling latest code..."
+          git fetch origin production
+          git reset --hard origin/production
+          
+         
+          
+          echo "✅ Deployment completed successfully!"
           EOF
