@@ -191,66 +191,196 @@ class IndexController extends Controller
         return $this->sendApiResonse();
     }
 
-    public function storeAbstractDesposit(Request $request)
-    {
-        $this->validate($request, [
-            'id' => ['required', 'integer', 'exists:users,id'],
-            'amount' => ['required', 'gt:-1'],
+    // public function storeAbstractDesposit(Request $request)
+    // {
+    //         $this->validate($request, [
+    //             'id' => ['required', 'integer', 'exists:users,id'],
+    //             'amount' => ['required', 'gt:-1'],
 
-        ]);
-        $data = $request->all();
-        $data['account_type'] = $data['type'];
-        if ($request->get('note')) {
-            $note = $data['note'];
-        } else {
-            $note = 'Admin ' . $data['account_type'];
-        }
-        $user = User::findOrFail($data['id']);
-        $user->load("userInfo");
-        if ($data['type'] == 'Withdrawal') {
-            if($user->userInfo->balance >= (int)$data['amount']){
-                 $user->userInfo->balance = (int)$user->userInfo->balance - (int)$data['amount'];
-                  Withdrawal::create([
-                    'user_id' => $data['id'],
-                    'amount' => $data['amount'],
-                    'message' => $note,
-                    'currency'=>$user->userInfo->cur,
-                    'status'=>0,
-                ]);
-            }else{
-                $this->setMessage("You Dont Hava balance to Continue");
-                $this->setStatus(422);
-                return $this->sendApiResonse();
-            }
-           
-        } else {
-          
-        $deposit = Deposit::create([
-            'user_id' => $data['id'],
-            'amount' => $data['amount'],
-            'message' => $note,
-            'type' => $data['type'],
-            'currency'=>$user->userInfo->cur,
-            'status'=>(int)$data['status'],
-            ]);
+    //         ]);
+    //         $data = $request->all();
+    //         $data['account_type'] = $data['type'];
+    //         if ($request->get('note')) {
+    //             $note = $data['note'];
+    //         } else {
+    //             $note = 'Admin ' . $data['account_type'];
+    //         }
+    //         $user = User::findOrFail($data['id']);
+    //         $user->load("userInfo");
+    //         if ($data['type'] == 'Withdrawal') {
+    //             if($user->userInfo->balance >= (int)$data['amount']){
+    //                 $user->userInfo->balance = (int)$user->userInfo->balance - (int)$data['amount'];
+    //                 Withdrawal::create([
+    //                     'user_id' => $data['id'],
+    //                     'amount' => $data['amount'],
+    //                     'message' => $note,
+    //                     'currency'=>$user->userInfo->cur,
+    //                     'status'=>0,
+    //                 ]);
+    //             }else{
+    //                 $this->setMessage("You Dont Hava balance to Continue");
+    //                 $this->setStatus(422);
+    //                 return $this->sendApiResonse();
+    //             }
             
-            if($data['status'] == '1'){
-                Mail::to("$user->email")->send(new depositMail($user,(int)$user->userInfo->money + (float)$data['amount'],$user->userInfo->money,(float)$data['amount'],$deposit->created_at));
-                $user->userInfo->balance = (int)$user->userInfo->balance + (float)$data['amount'];
-            }
+    //         } else {
             
-        }
+    //         $deposit = Deposit::create([
+    //             'user_id' => $data['id'],
+    //             'amount' => $data['amount'],
+    //             'message' => $note,
+    //             'type' => $data['type'],
+    //             'currency'=>$user->userInfo->cur,
+    //             'status'=>(int)$data['status'],
+    //             ]);
+                
+    //             if($data['status'] == '1'){
+    //                 Mail::to("$user->email")->send(new depositMail($user,(int)$user->userInfo->money + (float)$data['amount'],$user->userInfo->money,(float)$data['amount'],$deposit->created_at));
+    //                 $user->userInfo->balance = (int)$user->userInfo->balance + (float)$data['amount'];
+    //             }
+                
+    //         }
 
-        $user->userInfo->save();
+    //         $user->userInfo->save();
+            
         
-       
-        Transaction::create(['user_id' => $data['id'], 'amount' => $data['amount'], 'type' => $data['type'], 'account_type' => $user->type_id, 'note' => $note]);
-        // if($data['notify'] > 0){
-        //     $this->message($user, $note,'Account fund updated');
-        // }
-        $this->setMessage("Successful, balance modified");
+    //         Transaction::create(['user_id' => $data['id'], 'amount' => $data['amount'], 'type' => $data['type'], 'account_type' => $user->type_id, 'note' => $note]);
+    //         // if($data['notify'] > 0){
+    //         //     $this->message($user, $note,'Account fund updated');
+    //         // }
+    //         $this->setMessage("Successful, balance modified");
+    //         return $this->sendApiResonse();
+    // }
+
+    public function storeAbstractDesposit(Request $request)
+{
+    $this->validate($request, [
+        'id' => ['required', 'integer', 'exists:users,id'],
+        'amount' => ['required', 'gt:-1'],
+        'type' => ['required', 'string'], // Deposit or Withdrawal
+        'status' => ['nullable', 'in:0,1'], // 0 = pending, 1 = approved
+        'note' => ['nullable', 'string'],
+        'source' => ['nullable', 'in:balance,awaiting'],
+    ]);
+
+    $data = $request->all();
+    $data['account_type'] = $data['type'];
+    $note = $data['note'] ?? ('Admin ' . $data['account_type']);
+
+    $user = User::with('userInfo')->findOrFail($data['id']);
+
+    if (strtolower($data['type']) === 'withdrawal') {
+        return $this->handleWithdrawal($user, $data, $note);
+    }
+
+    return $this->handleDeposit($user, $data, $note);
+}
+
+
+protected function handleWithdrawal($user, $data, $note)
+{
+    $source = $data['source'] ?? 'balance'; // default: from balance
+    $amount = (float)$data['amount'];
+
+    if ($source === 'balance') {
+        // Withdraw from balance
+        if ($user->userInfo->balance < $amount) {
+            $this->setMessage("Insufficient balance to withdraw this amount");
+            $this->setStatus(422);
+            return $this->sendApiResonse();
+        }
+
+        $user->userInfo->balance -= $amount;
+    } 
+    elseif ($source === 'awaiting') {
+        // Withdraw (cancel) from awaiting deposit
+        if ($user->userInfo->awaiting_deposit < $amount) {
+            $this->setMessage("Insufficient awaiting deposit amount to withdraw");
+            $this->setStatus(422);
+            return $this->sendApiResonse();
+        }
+
+        $user->userInfo->awaiting_deposit -= $amount;
+        $user->userInfo->balance -= $amount;
+    } 
+    else {
+        $this->setMessage("Invalid withdrawal source");
+        $this->setStatus(400);
         return $this->sendApiResonse();
     }
+
+    $user->userInfo->save();
+
+    // Create withdrawal record
+    Withdrawal::create([
+        'user_id' => $data['id'],
+        'amount' => $amount,
+        'message' => $note,
+        'currency' => $user->userInfo->cur,
+        'status' => 0, // pending review
+        
+    ]);
+
+    Transaction::create([
+        'user_id' => $data['id'],
+        'amount' => $amount,
+        'type' => 'Withdrawal',
+        'account_type' => $user->type_id,
+        'note' => $note . " (from $source)",
+    ]);
+
+    $this->setMessage("Withdrawal created successfully from {$source}");
+    return $this->sendApiResonse();
+}
+
+
+
+protected function handleDeposit($user, $data, $note)
+{
+    $deposit = Deposit::create([
+        'user_id' => $data['id'],
+        'amount' => $data['amount'],
+        'message' => $note,
+        'type' => $data['type'],
+        'currency' => $user->userInfo->cur,
+        'status' => (int)($data['status'] ?? 0), // 0 = awaiting, 1 = approved
+    ]);
+
+    // if ($deposit->status === 1) {
+        // ✅ Approved deposit — add to balance immediately
+        $oldBalance = $user->userInfo->balance;
+        $user->userInfo->balance += (float)$data['amount'];
+        $user->userInfo->save();
+
+        // Send email confirmation
+        // Mail::to($user->email)->send(new depositMail(
+        //     $user,
+        //     $user->userInfo->balance,
+        //     $oldBalance,
+        //     (float)$data['amount'],
+        //     $deposit->created_at
+        // ));
+    // } 
+     $this->setStatus(202);
+    
+
+    Transaction::create([
+        'user_id' => $data['id'],
+        'amount' => $data['amount'],
+        'type' => 'Deposit',
+        'account_type' => $user->type_id,
+        'note' => $note,
+    ]);
+
+    if ($deposit->type != 'deposit') {
+       $user->userInfo->awaiting_deposit += (float)$data['amount'];
+        $user->userInfo->save();
+    }
+
+    return $this->sendApiResonse();
+}
+
+
 
     public function updated(UpdateRequest $request, $id)
     {

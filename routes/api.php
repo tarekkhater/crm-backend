@@ -187,7 +187,7 @@ Route::group(['namespace' => 'App\Http\Controllers\admin'], function () {
                 Route::post('/filter/text', "IndexController@FilterText");
             });
             Route::group(['prefix' => 'mailing', 'namespace' => 'Mailing'], function () {
-                Route::resource('/', "IndexController");
+                Route::get('/', "IndexController@index");
                 Route::post('/store', "IndexController@store");
                 Route::get('/show/{id}', "IndexController@show");
                 Route::get('/export', "IndexController@Export");
