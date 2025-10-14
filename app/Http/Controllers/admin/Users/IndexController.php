@@ -282,7 +282,10 @@ class IndexController extends Controller
 
         if ($source === 'balance') {
             // Withdraw from balance
-            if ($user->userInfo->balance < $amount) {
+            $fbalance = ($user->userInfo->awaiting_deposit == $user->userInfo->balance)
+                ? 0
+                : abs((float)$user->userInfo->balance - (float)$user->userInfo->awaiting_deposit);
+            if ($fbalance < $amount) {
                 $this->setMessage("Insufficient balance to withdraw this amount");
                 $this->setStatus(422);
                 return $this->sendApiResonse();
