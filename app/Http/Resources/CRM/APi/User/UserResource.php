@@ -114,7 +114,9 @@ class UserResource extends JsonResource
 
         $result['wallet'] =  [
             'awaiting' => $value['user_info']['awaiting_deposit'],
-            'trading' => max(0, (float)$value['user_info']['balance'] - (float)$value['user_info']['awaiting_deposit']),
+            'trading' => ($value['user_info']['awaiting_deposit'] == $value['user_info']['balance'])
+                ? 0
+                : abs((float)$value['user_info']['balance'] - (float)$value['user_info']['awaiting_deposit']),
         ];
         return $result;
     }
