@@ -30,7 +30,8 @@ class Position extends Model
         'trade_amount',
         'com',
         'created_by',
-        'closed_by'
+        'closed_by',
+        'open_at'
     ];
 
     protected $casts = [
@@ -51,18 +52,20 @@ class Position extends Model
         'net_profit' => 'float',
         'live_loss' => 'float',
         'trade_amount' => 'float',
+        'open_at' => 'datetime',
+        'created_at' => 'datetime',
     ];
 
     protected $with = ['currency'];
 
-
+    
     protected static function booted()
     {
+        static::creating(function ($model) {
+            $model->open_at = now(); // sets open_at to current timestamp
+        });
         static::saving(function (Position $position) {
-            
                 $position->recalculateFields();
-            
-            
         });
         
         static::saved(function (Position $position) {

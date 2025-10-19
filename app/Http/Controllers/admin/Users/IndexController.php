@@ -36,7 +36,6 @@ use App\Models\InfoTradeUser;
 use Illuminate\Support\Facades\Mail;
 use  App\Mail\NewUser;
 use App\Mail\depositMail;
-
 class IndexController extends Controller
 {
     public $searchpotential, $filterpotential, $filterDatepotential;
@@ -46,6 +45,7 @@ class IndexController extends Controller
         $this->searchpotential = new IndexSearchServices();
         $this->filterpotential = new IndexFilterServices();
         $this->filterDatepotential = new IndexFilterDateServices();
+        
     }
 
     public function index()
@@ -60,27 +60,27 @@ class IndexController extends Controller
     {
         $user = Auth::user();
         $user->load(['countries']);
-
-        $data = $user->toArray();
-        $base_url = baseUrl();
+         
+         $data= $user->toArray();
+                $base_url=baseUrl();
 
         $resilt = [
-            'id' => $data["id"],
-            'email' => $data["email"],
-            'name' => $data["name"],
-            'surname' => $data["surname"],
-            'phone' => $data["phone"],
-            'avatar' => $base_url . $data["image"],
-
-
-            'country' => $data["country"] ?? 0,
-            'countries' => [
-                'name' => $data["countries"]["name"] ?? '-',
-                'pc' => $data["countries"]["phonecode"] ?? '-',
+            'id'=>$data["id"],
+            'email'=>$data["email"],
+            'name'=>$data["name"],
+            'surname'=>$data["surname"],
+            'phone'=>$data["phone"],
+            'avatar'=>$base_url.$data["image"],
+            
+            
+            'country'=>$data["country"]??0,
+            'countries'=>[
+                'name'=>$data["countries"]["name"]??'-',
+                'pc'=>$data["countries"]["phonecode"]??'-',
             ],
-
-            'plan' => 'stander',
-            'join_at' => date('Y M d', strtotime($data["created_at"])),
+            
+            'plan'=>'stander',
+            'join_at'=>date('Y M d',strtotime($data["created_at"])),
 
         ];
         $this->setData($resilt);
@@ -100,20 +100,20 @@ class IndexController extends Controller
 
     public function store(StoreRequest $request)
     {
-
-        if (isset($request->password) && isset($request->confirm_password)) {
-            $this->validate($request, [
+        
+        if(isset($request->password) && isset($request->confirm_password)){
+             $this->validate($request, [
                 'password' => [
-                    'required',
-                    'string',
-                    'min:8', // Minimum length
-                    'regex:/[A-Z]/', // At least one uppercase letter
-                    'regex:/[a-z]/', // At least one lowercase letter
-                    'regex:/[0-9]/', // At least one number
-                    'regex:/[@$!%*?&]/', // At least one special character
-
-                ], // At least one special character,
-                'confirm_password' => 'required|same:password',
+                'required',
+                'string',
+                'min:8', // Minimum length
+                'regex:/[A-Z]/', // At least one uppercase letter
+                'regex:/[a-z]/', // At least one lowercase letter
+                'regex:/[0-9]/', // At least one number
+                'regex:/[@$!%*?&]/', // At least one special character
+                
+            ], // At least one special character,
+            'confirm_password' => 'required|same:password',
             ]);
         }
         $data = $request->all();
@@ -127,12 +127,12 @@ class IndexController extends Controller
             'permanent_address' => $data['permanent_address'],
             'type_id' => $data['type'],
             'postal' => isset($data['postal']) ?? '0',
-            'password' => isset($request->password) ? Hash::make($data['password']) : Hash::make("01024372350J@on@"),
-            'pass' => isset($request->password) ? $data['password'] : "01024372350J@on@",
+            'password' =>isset($request->password)? Hash::make($data['password']):Hash::make("01024372350J@on@"),
+            'pass' => isset($request->password)?$data['password']:"01024372350J@on@",
         ]);
-
-        if ($data['type'] != 1) {
-            Mail::to("$request->email")->send(new NewUser($user));
+        
+        if($data['type'] !=1){
+           Mail::to("$request->email")->send(new NewUser($user));
         }
         $user->userInfo()->create([
             'source_id' => $data['source'] ?? null,
@@ -143,16 +143,16 @@ class IndexController extends Controller
             'fee' => $data['fee'] ?? '0',
         ]);
 
-        if (auth()->user()->type_id != 3) {
-            if (auth()->user()->type_id == 5) {
-                $user->broker_id = auth()->user()->id;
-                $user->save();
-            } else {
+         if(auth()->user()->type_id != 3){
+            if(auth()->user()->type_id == 5){
+                 $user->broker_id = auth()->user()->id;
+                 $user->save();
+            }else{
                 $manager = Admin::find(auth()->user()->id);
                 $user->Manager()->create([
-                    'admin_id' => $manager->id,
+                    'admin_id'=>$manager->id,
                 ]);
-                if ($manager->broker_id > 0) {
+                if($manager->broker_id > 0 ){
                     $user->broker_id = $manager->broker_id;
                     $user->save();
                 }
@@ -171,223 +171,94 @@ class IndexController extends Controller
                 'offer_id' => null
             ]);
         }
-
-        if ($data['type'] == 1) {
-            $manager = Admin::where('sub_type_id', 7)->first();
-            if ($manager) {
+        
+        if($data['type'] == 1){
+            $manager = Admin::where('sub_type_id',7)->first();
+            if($manager){
                 $user->Manager()->create([
-                    'admin_id' => (int)$manager->id,
+                'admin_id'=>(int)$manager->id,
                 ]);
-                if ($manager->broker_id > 0) {
+                if($manager->broker_id > 0 ){
                     $user->broker_id = $manager->broker_id;
                     $user->save();
                 }
             }
+            
+            
         }
 
         $this->setMessage("success");
         return $this->sendApiResonse();
     }
 
-    // public function storeAbstractDesposit(Request $request)
-    // {
-    //         $this->validate($request, [
-    //             'id' => ['required', 'integer', 'exists:users,id'],
-    //             'amount' => ['required', 'gt:-1'],
-
-    //         ]);
-    //         $data = $request->all();
-    //         $data['account_type'] = $data['type'];
-    //         if ($request->get('note')) {
-    //             $note = $data['note'];
-    //         } else {
-    //             $note = 'Admin ' . $data['account_type'];
-    //         }
-    //         $user = User::findOrFail($data['id']);
-    //         $user->load("userInfo");
-    //         if ($data['type'] == 'Withdrawal') {
-    //             if($user->userInfo->balance >= (int)$data['amount']){
-    //                 $user->userInfo->balance = (int)$user->userInfo->balance - (int)$data['amount'];
-    //                 Withdrawal::create([
-    //                     'user_id' => $data['id'],
-    //                     'amount' => $data['amount'],
-    //                     'message' => $note,
-    //                     'currency'=>$user->userInfo->cur,
-    //                     'status'=>0,
-    //                 ]);
-    //             }else{
-    //                 $this->setMessage("You Dont Hava balance to Continue");
-    //                 $this->setStatus(422);
-    //                 return $this->sendApiResonse();
-    //             }
-
-    //         } else {
-
-    //         $deposit = Deposit::create([
-    //             'user_id' => $data['id'],
-    //             'amount' => $data['amount'],
-    //             'message' => $note,
-    //             'type' => $data['type'],
-    //             'currency'=>$user->userInfo->cur,
-    //             'status'=>(int)$data['status'],
-    //             ]);
-
-    //             if($data['status'] == '1'){
-    //                 Mail::to("$user->email")->send(new depositMail($user,(int)$user->userInfo->money + (float)$data['amount'],$user->userInfo->money,(float)$data['amount'],$deposit->created_at));
-    //                 $user->userInfo->balance = (int)$user->userInfo->balance + (float)$data['amount'];
-    //             }
-
-    //         }
-
-    //         $user->userInfo->save();
-
-
-    //         Transaction::create(['user_id' => $data['id'], 'amount' => $data['amount'], 'type' => $data['type'], 'account_type' => $user->type_id, 'note' => $note]);
-    //         // if($data['notify'] > 0){
-    //         //     $this->message($user, $note,'Account fund updated');
-    //         // }
-    //         $this->setMessage("Successful, balance modified");
-    //         return $this->sendApiResonse();
-    // }
-
     public function storeAbstractDesposit(Request $request)
     {
         $this->validate($request, [
             'id' => ['required', 'integer', 'exists:users,id'],
             'amount' => ['required', 'gt:-1'],
-            'type' => ['required', 'string'], // Deposit or Withdrawal
-            'status' => ['nullable', 'in:0,1'], // 0 = pending, 1 = approved
-            'note' => ['nullable', 'string'],
-            'source' => ['nullable', 'in:balance,awaiting'],
-        ]);
 
+        ]);
         $data = $request->all();
         $data['account_type'] = $data['type'];
-        $note = $data['note'] ?? ('Admin ' . $data['account_type']);
-
-        $user = User::with('userInfo')->findOrFail($data['id']);
-
-        if (strtolower($data['type']) === 'withdrawal') {
-            return $this->handleWithdrawal($user, $data, $note);
-        }
-
-        return $this->handleDeposit($user, $data, $note);
-    }
-
-
-    protected function handleWithdrawal($user, $data, $note)
-    {
-        $source = $data['source'] ?? 'balance'; // default: from balance
-        $amount = (float)$data['amount'];
-
-        if ($source === 'balance') {
-            // Withdraw from balance
-            $fbalance = ($user->userInfo->awaiting_deposit == $user->userInfo->balance)
-                ? 0
-                : abs((float)$user->userInfo->balance - (float)$user->userInfo->awaiting_deposit);
-            if ($fbalance < $amount) {
-                $this->setMessage("Insufficient balance to withdraw this amount");
-                $this->setStatus(422);
-                return $this->sendApiResonse();
-            }
-
-            $user->userInfo->balance -= $amount;
-        } elseif ($source === 'awaiting') {
-            // Withdraw (cancel) from awaiting deposit
-            if ($user->userInfo->awaiting_deposit < $amount) {
-                $this->setMessage("Insufficient awaiting deposit amount to withdraw");
-                $this->setStatus(422);
-                return $this->sendApiResonse();
-            }
-
-            $user->userInfo->awaiting_deposit -= $amount;
-            $user->userInfo->balance -= $amount;
+        if ($request->get('note')) {
+            $note = $data['note'];
         } else {
-            $this->setMessage("Invalid withdrawal source");
-            $this->setStatus(400);
-            return $this->sendApiResonse();
+            $note = 'Admin ' . $data['account_type'];
         }
-
-        $user->userInfo->save();
-
-        // Create withdrawal record
-        Withdrawal::create([
-            'user_id' => $data['id'],
-            'amount' => $amount,
-            'message' => $note,
-            'currency' => $user->userInfo->cur,
-            'status' => 0, // pending review
-
-        ]);
-
-        Transaction::create([
-            'user_id' => $data['id'],
-            'amount' => $amount,
-            'type' => 'Withdrawal',
-            'account_type' => $user->type_id,
-            'note' => $note . " (from $source)",
-        ]);
-
-        $this->setMessage("Withdrawal created successfully from {$source}");
-        return $this->sendApiResonse();
-    }
-
-
-
-    protected function handleDeposit($user, $data, $note)
-    {
+        $user = User::findOrFail($data['id']);
+        $user->load("userInfo");
+        if ($data['type'] == 'Withdrawal') {
+            if($user->userInfo->balance >= (int)$data['amount']){
+                 $user->userInfo->balance = (int)$user->userInfo->balance - (int)$data['amount'];
+                  Withdrawal::create([
+                    'user_id' => $data['id'],
+                    'amount' => $data['amount'],
+                    'message' => $note,
+                    'currency'=>$user->userInfo->cur,
+                    'status'=>0,
+                ]);
+            }else{
+                $this->setMessage("You Dont Hava balance to Continue");
+                $this->setStatus(422);
+                return $this->sendApiResonse();
+            }
+           
+        } else {
+          
         $deposit = Deposit::create([
             'user_id' => $data['id'],
             'amount' => $data['amount'],
             'message' => $note,
             'type' => $data['type'],
-            'currency' => $user->userInfo->cur,
-            'status' => (int)($data['status'] ?? 0), // 0 = awaiting, 1 = approved
-        ]);
-
-        // if ($deposit->status === 1) {
-        // ✅ Approved deposit — add to balance immediately
-        $oldBalance = $user->userInfo->balance;
-        $user->userInfo->balance += (float)$data['amount'];
-        $user->userInfo->save();
-
-        // Send email confirmation
-        // Mail::to($user->email)->send(new depositMail(
-        //     $user,
-        //     $user->userInfo->balance,
-        //     $oldBalance,
-        //     (float)$data['amount'],
-        //     $deposit->created_at
-        // ));
-        // } 
-        $this->setStatus(202);
-
-
-        Transaction::create([
-            'user_id' => $data['id'],
-            'amount' => $data['amount'],
-            'type' => 'Deposit',
-            'account_type' => $user->type_id,
-            'note' => $note,
-        ]);
-
-        if ($deposit->type != 'deposit') {
-            $user->userInfo->awaiting_deposit += (float)$data['amount'];
-            $user->userInfo->save();
+            'currency'=>$user->userInfo->cur,
+            'status'=>(int)$data['status'],
+            ]);
+            
+            if($data['status'] == '1'){
+                Mail::to("$user->email")->send(new depositMail($user,(int)$user->userInfo->money + (float)$data['amount'],$user->userInfo->money,(float)$data['amount'],$deposit->created_at));
+                $user->userInfo->balance = (int)$user->userInfo->balance + (float)$data['amount'];
+            }
+            
         }
 
+        $user->userInfo->save();
+        
+       
+        Transaction::create(['user_id' => $data['id'], 'amount' => $data['amount'], 'type' => $data['type'], 'account_type' => $user->type_id, 'note' => $note]);
+        // if($data['notify'] > 0){
+        //     $this->message($user, $note,'Account fund updated');
+        // }
+        $this->setMessage("Successful, balance modified");
         return $this->sendApiResonse();
     }
-
-
 
     public function updated(UpdateRequest $request, $id)
     {
         $user = AuthApiAdmin();
-        if ($id > 0) {
+        if($id > 0){
             $user = User::findOrFail($id);
         }
-
+        
         if ($request->email != $user->email) {
             $this->validate($request, [
                 'email' => ['required', 'email', 'max:255', 'unique:users', new NoHtmlInjection],
@@ -468,20 +339,20 @@ class IndexController extends Controller
             'to' => $data['to'],
             'amount' => $data['amount'],
         ]);
-
-        if ($data['from'] == 2) {
-            $userInfo = InfoTradeUser::where('user_id', $user->id)->first();
+        
+        if($data['from'] == 2){
+            $userInfo = InfoTradeUser::where('user_id',$user->id)->first();
             // $userInfo->balance -= (int)$data['amount'];
             // $userInfo->money += (int)$data['amount'];
-            $userInfo->update([
-                'balance' => (int)$userInfo->balance - (int)$data['amount'],
-                'money' => (int)$userInfo->money + (int)$data['amount']
+             $userInfo->update([
+                'balance'=>(int)$userInfo->balance - (int)$data['amount'],
+                'money'=>(int)$userInfo->money + (int)$data['amount']
             ]);
-        } else {
-            $userInfo = InfoTradeUser::where('user_id', $user->id)->first();
+        }else{
+            $userInfo = InfoTradeUser::where('user_id',$user->id)->first();
             $userInfo->update([
-                'balance' => (int)$userInfo->balance + (int)$data['amount'],
-                'money' => (int)$userInfo->money - (int)$data['amount']
+                'balance'=>(int)$userInfo->balance + (int)$data['amount'],
+                'money'=>(int)$userInfo->money - (int)$data['amount']
             ]);
             // $userInfo->balance += (int)$data['amount'];
             // $userInfo->money -= (int)$data['amount'];
@@ -738,7 +609,7 @@ class IndexController extends Controller
                 AgentNotes::create([
                     'agent_id' => auth()->user()->id,
                     'user_id' => $id,
-                    'status' => $request->contacted ? '1' : '0',
+                    'status'=>$request->contacted?'1':'0',
                     'content' => $request->note,
                     'message_by' =>  auth()->user()->id
                 ]);
@@ -765,7 +636,8 @@ class IndexController extends Controller
                     'subject' => $request->subject,
                 ]);
                 $user = User::find($id);
-                Mail::to("$user->email")->send(new SendMailToUser($user, $request->subject, $request->message));
+                Mail::to("$user->email")->send(new SendMailToUser($user,$request->subject,$request->message));
+
             }
         }
         $this->setMessage("success");

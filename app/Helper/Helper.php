@@ -10,6 +10,8 @@ use App\Models\UserManager;
 use App\Models\User;
 use Illuminate\Support\Facades\URL;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+
 
 if (!function_exists('amt')) {
     function amt($value)
@@ -118,7 +120,6 @@ if (!function_exists('sendMessage')) {
         Message::create($data);
     }
 }
-
 if (!function_exists('getUsersIds')) {
     function getUsersIds()
     {
@@ -148,6 +149,7 @@ $ids = AssignUserManager::where('admin_id', auth()->user()->id)->pluck('user_id'
         return  $ids;
     }
 }
+
 
 if (!function_exists('getTeamLeaderIds')) {
     function getTeamLeaderIds()

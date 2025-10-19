@@ -4,6 +4,7 @@ namespace App\Services\Users\Leads;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use App\Models\InfoTradeUser;
 use App\Models\AssignUserManager;
@@ -29,7 +30,7 @@ class IndexFilterServices extends Controller
             case 1:
                 return $this->potinal($request);    
             case 2:
-                return $this->leads($request); 
+                return $this->Active($request);    
             case 5:
                 return $this->publicCustomer($request);    
             case 9:
@@ -41,67 +42,175 @@ class IndexFilterServices extends Controller
     
     public function leads($request)
     {
-        
-        
-        
-        $users = User::leadsFilter($this->userFilters, $this->tradeFilters, $this->managerIds)
-                    ->with(['Manager', 'userInfo', 'countries'])
+        $query = User::leadsFilter($this->userFilters, $this->tradeFilters, $this->managerIds)
                     ->customSort($this->sortBy, $this->sortDirection)
-                    ->applyDateFilters($this->dateFilters)
-                    ->paginate($request->per_page);
-                    
+                    ->applyDateFilters($this->dateFilters);
         
-        return $this->formatResponse($users);
+        // Get paginated users first WITHOUT eager loading (faster query)
+        $users = $query->paginate($request->per_page);
+        
+        // Then eager load relationships ONLY for the 25/50 users returned
+        // This is more efficient than loading for all filtered users
+        $users->load([
+            'Manager.manager',      // Nested manager relationship
+            'userInfo.source',      // Source information
+            'userInfo.plan',        // Plan details  
+            'userInfo.status',      // Status
+            'userInfo.branch',      // Branch
+            'countries',            // Country data
+            'latestAgentNote'       // Latest agent note (prevents 50 N+1 queries)
+        ]);
+        
+        // Calculate balance only for current page users (25 or 50)
+        $totalBalance = $this->calculatePageBalance($users->items());
+        
+        return $this->formatResponse($users, $totalBalance);
     }
     
     public function Active($request)
     {
-        $users = User::activeCustomers($this->userFilters, $this->tradeFilters, $this->managerIds)
-                    ->with(['Manager', 'userInfo', 'countries'])
+        $query = User::activeCustomers($this->userFilters, $this->tradeFilters, $this->managerIds)
                     ->customSort($this->sortBy, $this->sortDirection)
-                    ->paginate($request->per_page);
+                    ->applyDateFilters($this->dateFilters);
         
-        return $this->formatResponse($users);
+        // Get paginated users first WITHOUT eager loading
+        $users = $query->paginate($request->per_page);
+        
+        // Eager load ONLY for returned users
+        $users->load([
+            'Manager.manager',
+            'userInfo.source',
+            'userInfo.plan',
+            'userInfo.status',
+            'userInfo.branch',
+            'countries',
+            'latestAgentNote'
+        ]);
+        
+        // Calculate balance only for current page users
+        $totalBalance = $this->calculatePageBalance($users->items());
+        
+        return $this->formatResponse($users, $totalBalance);
     }
     
     public function potinal($request)
     {
-        $users = User::potentialCustomers($this->userFilters, $this->tradeFilters, $this->managerIds)
-                    ->with(['Manager', 'userInfo', 'countries'])
-                    ->customSort($this->sortBy, $this->sortDirection)
-                    ->paginate($request->per_page);
+        $query = User::potentialCustomers($this->userFilters, $this->tradeFilters, $this->managerIds)
+                    ->customSort($this->sortBy, $this->sortDirection);
         
-        return $this->formatResponse($users);
+        // Get paginated users first WITHOUT eager loading
+        $users = $query->paginate($request->per_page);
+        
+        // Eager load ONLY for returned users
+        $users->load([
+            'Manager.manager',
+            'userInfo.source',
+            'userInfo.plan',
+            'userInfo.status',
+            'userInfo.branch',
+            'countries',
+            'latestAgentNote'
+        ]);
+        
+        // Calculate balance only for current page users
+        $totalBalance = $this->calculatePageBalance($users->items());
+        
+        return $this->formatResponse($users, $totalBalance);
     }
     
     public function ArchiveCustomer($request)
     {
-        $users = User::archiveCustomers($this->userFilters, $this->tradeFilters, $this->managerIds)
-                    ->with(['Manager', 'userInfo', 'countries'])
-                    ->customSort($this->sortBy, $this->sortDirection)
-                    ->paginate($request->per_page);
+        $query = User::archiveCustomers($this->userFilters, $this->tradeFilters, $this->managerIds)
+                    ->customSort($this->sortBy, $this->sortDirection);
         
-        return $this->formatResponse($users);
+        // Get paginated users first WITHOUT eager loading
+        $users = $query->paginate($request->per_page);
+        
+        // Eager load ONLY for returned users
+        $users->load([
+            'Manager.manager',
+            'userInfo.source',
+            'userInfo.plan',
+            'userInfo.status',
+            'userInfo.branch',
+            'countries',
+            'latestAgentNote'
+        ]);
+        
+        // Calculate balance only for current page users
+        $totalBalance = $this->calculatePageBalance($users->items());
+        
+        return $this->formatResponse($users, $totalBalance);
     }
     
     public function FTD($request)
     {
-        $users = User::ftdCustomers($this->userFilters, $this->tradeFilters, $this->managerIds)
-                    ->with(['Manager', 'userInfo', 'countries'])
-                    ->customSort($this->sortBy, $this->sortDirection)
-                    ->paginate($request->per_page);
+        $query = User::ftdCustomers($this->userFilters, $this->tradeFilters, $this->managerIds)
+                    ->customSort($this->sortBy, $this->sortDirection);
         
-        return $this->formatResponse($users);
+        // Get paginated users first WITHOUT eager loading
+        $users = $query->paginate($request->per_page);
+        
+        // Eager load ONLY for returned users
+        $users->load([
+            'Manager.manager',
+            'userInfo.source',
+            'userInfo.plan',
+            'userInfo.status',
+            'userInfo.branch',
+            'countries',
+            'latestAgentNote'
+        ]);
+        
+        // Calculate balance only for current page users
+        $totalBalance = $this->calculatePageBalance($users->items());
+        
+        return $this->formatResponse($users, $totalBalance);
     }
     
     public function publicCustomer($request)
     {
-        $users = User::publicCustomers($this->userFilters, $this->tradeFilters, $this->managerIds)
-                    ->with(['Manager', 'userInfo', 'countries'])
-                    ->customSort($this->sortBy, $this->sortDirection)
-                    ->paginate($request->per_page);
+        $query = User::publicCustomers($this->userFilters, $this->tradeFilters, $this->managerIds)
+                    ->customSort($this->sortBy, $this->sortDirection);
         
-        return $this->formatResponse($users);
+        // Get paginated users first WITHOUT eager loading
+        $users = $query->paginate($request->per_page);
+        
+        // Eager load ONLY for returned users
+        $users->load([
+            'Manager.manager',
+            'userInfo.source',
+            'userInfo.plan',
+            'userInfo.status',
+            'userInfo.branch',
+            'countries',
+            'latestAgentNote'
+        ]);
+        
+        // Calculate balance only for current page users
+        $totalBalance = $this->calculatePageBalance($users->items());
+        
+        return $this->formatResponse($users, $totalBalance);
+    }
+    
+    /**
+     * حساب إجمالي الـ balance للصفحة الحالية فقط
+     * Calculate balance for current page users only (25 or 50 users)
+     * Much faster than calculating for all filtered users!
+     */
+    private function calculatePageBalance($users)
+    {
+        if (empty($users)) {
+            return 0;
+        }
+        
+        // Extract user IDs from paginated results
+        $userIds = collect($users)->pluck('id')->toArray();
+        
+        // Calculate sum for only these users - super fast!
+        return DB::table('info_trade_users')
+                  ->whereIn('user_id', $userIds)
+                  ->sum('balance') ?? 0;
     }
     
     /**
@@ -382,7 +491,7 @@ class IndexFilterServices extends Controller
     /**
      * Format the paginated response
      */
-    private function formatResponse($users) 
+    private function formatResponse($users, $totalBalance = 0) 
     {
         return [
             'data' => UsersResource::make($users->items()),
@@ -392,6 +501,7 @@ class IndexFilterServices extends Controller
             'last_page' => $users->lastPage(),
             'from' => $users->firstItem(),
             'to' => $users->lastItem(),
+            'total_balance' => round($totalBalance, 2),
             'links' => [],
         ];
     }

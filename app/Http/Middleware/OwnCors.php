@@ -12,6 +12,7 @@ class OwnCors
         'https://crm.quantumprime.app',
         'https://trade.quantumprime.app',
         'https://crm.bbstechnology.net',
+        'https://pbo.quantumprime.app',
     ];
 
     public function handle(Request $request, Closure $next)

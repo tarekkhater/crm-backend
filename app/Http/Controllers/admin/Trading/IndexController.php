@@ -174,6 +174,7 @@ public function filterText(){
         'com' => 'nullable|numeric',
         'stop_loss' => 'nullable|numeric|min:0',
         'take_profit' => 'nullable|numeric|min:0',
+        'open_at'=> 'nullable',
         ]);
 
         // ✅ Step 2: Call your service to update the trade

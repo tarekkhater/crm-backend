@@ -275,6 +275,7 @@ private function getBulkStocksRates($currencies)
             'id'   => $currency->id,
             'sym'  => $currency->sym,
             'name'=>$currency->ex_sym,
+            'type' => $currency->type, // نضيف الـ type
             'leverage'=>$currency->leverage,
             "buy_spread"=> $currency->buy_spread,
             "sell_spread"=> $currency->sell_spread,

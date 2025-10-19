@@ -130,22 +130,42 @@ class IndexController extends Controller
 
     public function leadCenter(Request $request)
     {
-        $statues = Status::get();
-        $idspotinal = InfoTradeUser::whereIn('user_id', getUsersIds())->pluck('user_id');
-        $total = $this->checkFilterLeaderTotalCenter($request->type, $idspotinal);
+        // $statues = Status::get();
+        // $idspotinal = InfoTradeUser::whereIn('user_id', getUsersIds())->pluck('user_id');
+        // $total = $this->checkFilterLeaderTotalCenter($request->type, $idspotinal);
+        // $data = [
+        //     ['id' => 0, 'title' => 'Total Leads', 'count' => $total, 'icon' => asset('/src/images/phone.png')]
+        // ];
+        $statuses = Status::get();
+        
+        // Calculate total using subquery
+        $total = $this->checkFilterLeaderTotalCenterOptimized($request->type);
+        
         $data = [
             ['id' => 0, 'title' => 'Total Leads', 'count' => $total, 'icon' => asset('/src/images/phone.png')]
         ];
-        $ids = User::whereIn('id', getUsersIds())->where('type_id', 2)->pluck('id');
-        foreach ($statues as $status) {
+        
+        // $ids = User::whereIn('id', getUsersIds())->where('type_id', 2)->pluck('id');
+        // foreach ($statues as $status) {
             
-                $data[] = [
-                    'id' => $status->id,
-                    'title' => $status->name,
-                    'count' => $this->checkFilterLeaderCenter($request->type, $status, $ids),
-                    'icon' => asset('/src/' . $status->icon)
-                ];
+        //         $data[] = [
+        //             'id' => $status->id,
+        //             'title' => $status->name,
+        //             'count' => $this->checkFilterLeaderCenter($request->type, $status, $ids),
+        //             'icon' => asset('/src/' . $status->icon)
+        //         ];
             
+        // }
+        
+        $statusCounts = $this->getStatusCountsOptimized($request->type);
+        
+        foreach ($statuses as $status) {
+            $data[] = [
+                'id' => $status->id,
+                'title' => $status->name,
+                'count' => $statusCounts[$status->id] ?? 0,
+                'icon' => asset('/src/' . $status->icon)
+            ];
         }
         $this->setData($data);
         $this->setMessage("success");
@@ -155,8 +175,21 @@ class IndexController extends Controller
     public function publicLead(Request $request)
     {
 
-        $idspotinal = InfoTradeUser::whereIn('user_id', getUsersIds())->where('status_id', '<>', 4)->pluck('user_id');
-        $users = User::whereIn('id', $idspotinal)->with(['Manager.manager', 'userInfo','countries'])->where('type_id', 1)->orderByDESC('created_at')->limit(8)->paginate(15);
+        // $idspotinal = InfoTradeUser::whereIn('user_id', getUsersIds())->where('status_id', '<>', 4)->pluck('user_id');
+        // $users = User::whereIn('id', $idspotinal)->with(['Manager.manager', 'userInfo','countries'])->where('type_id', 1)->orderByDESC('created_at')->limit(8)->paginate(15);
+        $users = User::whereExists(function($query) {
+                    $query->select(\DB::raw(1))
+                          ->from('info_trade_users')
+                          ->whereColumn('info_trade_users.user_id', 'users.id')
+                          ->whereIn('info_trade_users.user_id', getUsersIds())
+                          ->where('info_trade_users.status_id', '<>', 4);
+                })
+                ->where('type_id', 1)
+                ->orderByDesc('created_at')
+                ->paginate(15);
+        
+        // Load relationships AFTER pagination (only for 15 users)
+        $users->load(['Manager.manager', 'userInfo.source', 'userInfo.plan', 'userInfo.status', 'countries', 'latestAgentNote']);
 
         $this->setData($users);
         $this->setMessage("success");
@@ -354,7 +387,61 @@ class IndexController extends Controller
         }
         return $records;
     }
-
+private function checkFilterLeaderTotalCenterOptimized($type)
+    {
+        $query = User::whereExists(function($subQuery) {
+                    $subQuery->select(\DB::raw(1))
+                            ->from('info_trade_users')
+                            ->whereColumn('info_trade_users.user_id', 'users.id')
+                            ->whereIn('info_trade_users.user_id', getUsersIds());
+                })
+                ->where('type_id', 2);
+        
+        switch ($type) {
+            case 'Daily':
+                $query->whereDate('created_at', Carbon::today());
+                break;
+            case 'Weekly':
+                $query->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
+                break;
+            case 'Monthly':
+                $query->whereBetween('created_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()]);
+                break;
+            case 'Yearly':
+                $query->whereBetween('created_at', [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()]);
+                break;
+        }
+        
+        return $query->count();
+    }
+    
+    // Get all status counts in ONE query
+    private function getStatusCountsOptimized($type)
+    {
+        $query = \DB::table('info_trade_users')
+                    ->join('users', 'users.id', '=', 'info_trade_users.user_id')
+                    ->whereIn('info_trade_users.user_id', getUsersIds())
+                    ->where('users.type_id', 2)
+                    ->select('info_trade_users.status_id', \DB::raw('COUNT(*) as count'))
+                    ->groupBy('info_trade_users.status_id');
+        
+        switch ($type) {
+            case 'Daily':
+                $query->whereDate('info_trade_users.created_at', Carbon::today());
+                break;
+            case 'Weekly':
+                $query->whereBetween('info_trade_users.created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
+                break;
+            case 'Monthly':
+                $query->whereBetween('info_trade_users.created_at', [Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth()]);
+                break;
+            case 'Yearly':
+                $query->whereBetween('info_trade_users.created_at', [Carbon::now()->startOfYear(), Carbon::now()->endOfYear()]);
+                break;
+        }
+        
+        return $query->pluck('count', 'status_id')->toArray();
+    }
     public function checkFilterLeaderTotalCenter($type, $idspotinal)
     {
         $records = 0;

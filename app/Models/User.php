@@ -280,40 +280,54 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
     public function AgentUser(){
         return $this->hasOne(AgentUser::class, 'user_id');
     }
-
-    public function AgentNotes(){
-        return $this->hasOne(AgentNotes::class, 'user_id');
+    
+    // Relationship for all agent notes
+    public function agentNotes(){
+        return $this->hasMany(AgentNotes::class, 'user_id');
+    }
+    
+    // Relationship for latest agent note only - optimized for eager loading
+    public function latestAgentNote(){
+        return $this->hasOne(AgentNotes::class, 'user_id')
+                    ->orderByDesc('created_at')
+                    ->limit(1);
     }
     
     public function getLastAgentNoteDateAttribute()
     {
-        // Get the latest note's date or null if none exists
+        // Use eager loaded relationship if available to prevent N+1 queries
+        // if ($this->relationLoaded('latestAgentNote')) {
+        //     $note = $this->latestAgentNote;
+        //     if ($note && $note->created_at) {
+        //         return Carbon::parse($note->created_at)->format('d M Y, H:i');
+        //     }
+        //     return null;
+        // }
+        
+        // Fallback to query if not eager loaded (shouldn't happen with eager loading)
         $date = $this->agentNotes()
                      ->orderBy('created_at', 'desc')
                      ->value('created_at');
 
         if ($date) {
-            // Parse and format the date with Carbon
-            return Carbon::parse($date)->format('d M Y, H:i'); // Example: 03 Sep 2025, 14:30
+            return Carbon::parse($date)->format('d M Y, H:i');
         }
 
         return null;
-
     }
     
     public function getLastAgentNoteContentAttribute()
     {
-        // Get the latest note's date or null if none exists
-        $date = $this->agentNotes()
-                     ->orderBy('created_at', 'desc')
-                     ->value('content');
-
-        if ($date) {
-            return $date;
-        }
-
-        return null;
-
+        // Use eager loaded relationship if available to prevent N+1 queries
+        // if ($this->relationLoaded('latestAgentNote')) {
+        //     $note = $this->latestAgentNote;
+        //     return $note ? $note->content : null;
+        // }
+        
+        
+        return $this->agentNotes()
+                    ->orderBy('created_at', 'desc')
+                    ->value('content');
     }
 
      public function broker(){
@@ -513,27 +527,30 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
     public function scopeFilterByTradeInfo($query, array $tradeFilters = [], array $statusFilters = [])
     {
        if (!empty($tradeFilters) || !empty($statusFilters)) {
-            return $query->whereHas('userInfo', function ($q) use ($tradeFilters, $statusFilters) {
+            // OPTIMIZED: Use whereExists instead of JOIN to avoid distinct() overhead
+            // whereExists is faster than whereHas for filtering
+            return $query->whereExists(function($subQuery) use ($tradeFilters, $statusFilters) {
+                $subQuery->select(DB::raw(1))
+                        ->from('info_trade_users')
+                        ->whereColumn('info_trade_users.user_id', 'users.id');
+                
                 // Apply trade filters
                 foreach ($tradeFilters as $filter) {
                     if (count($filter) == 2 && is_array($filter[1])) {
-                        $q->whereIn($filter[0], $filter[1]);
+                        $subQuery->whereIn($filter[0], $filter[1]);
                     }
                 }
         
                 // Apply status filters
                 foreach ($statusFilters as $condition) {
                     if (count($condition) === 2 && is_array($condition[1])) {
-                        // Example: ['status', [1,2,3]]
-                        $q->whereIn($condition[0], $condition[1]);
+                        $subQuery->whereIn($condition[0], $condition[1]);
                     } elseif (count($condition) === 3) {
-                        // Example: ['age', '>=', 18]
-                        $q->where($condition[0], $condition[1], $condition[2]);
+                        $subQuery->where($condition[0], $condition[1], $condition[2]);
                     }
                 }
             });
         }
-
 
         return $query;
     }
@@ -626,33 +643,55 @@ public function scopeCustomSort($query, $sortBy = 'id', $sortDirection = 'desc')
     
     public function scopeLeadsFilter(Builder $query, array $userFilters = [], array $tradeFilters = [], $managerIds = null)
     {
-        Log::info($tradeFilters);
-        return $query->ofType([2])
-                    ->filterBySearch($userFilters)
-                    ->filterByTradeInfo($tradeFilters)
-                    ->filterByManager($managerIds)
-                    ->whereIn('id', function($subQuery) use ($tradeFilters) {
-                        $subQuery->select('user_id')
-                                ->from('info_trade_users')
-                                ->whereIn('user_id', getUsersIds());
-                        
-                        foreach ($tradeFilters as $filter) {
-                            $subQuery->whereIn($filter[0], $filter[1]);
-                        }
-                    });
+        // REMOVED Log::info - was slowing down every request
+        // Apply type filter first (most selective)
+        $query->ofType([2]);
+        
+        // Apply user search filters
+        if (!empty($userFilters)) {
+            $query->filterBySearch($userFilters);
+        }
+        
+        // Apply manager filter
+        if ($managerIds !== null) {
+            $query->filterByManager($managerIds);
+        }
+        
+        // Apply global user IDs filter with trade info in single subquery
+        $query->whereExists(function($subQuery) use ($tradeFilters) {
+            $subQuery->select(DB::raw(1))
+                    ->from('info_trade_users')
+                    ->whereColumn('info_trade_users.user_id', 'users.id')
+                    ->whereIn('info_trade_users.user_id', getUsersIds());
+            
+            // Apply trade filters in the same subquery
+            foreach ($tradeFilters as $filter) {
+                if (count($filter) == 2 && is_array($filter[1])) {
+                    $subQuery->whereIn($filter[0], $filter[1]);
+                }
+            }
+        });
+        
+        return $query;
     }
 
     /**
      * Scope for active customers
+     * OPTIMIZED: Use subquery instead of pluck to avoid loading data into memory
      */
     public function scopeActiveCustomers(Builder $query, array $userFilters = [], array $tradeFilters = [], $managerIds = null)
     {
-        $assignedUserIds = \App\Models\AssignUserManager::where('admin_id', '<>', 0)
-                                                        ->whereIn('user_id', getUsersIds())
-                                                        ->pluck('user_id');
-
+        // OPTIMIZED: Use whereIn with subquery instead of pluck
+        // This prevents loading thousands of IDs into PHP memory
         return $query->ofType(2)
-                    ->whereIn('id', $assignedUserIds)
+                    ->whereIn('id', function($subQuery) {
+                        $subQuery->select('user_id')
+                                ->from('assign_user_managers')
+                                ->where('admin_id', '<>', 0)
+                                ->whereColumn('info_trade_users.user_id', 'users.id')
+                                ->whereIn('info_trade_users.user_id', getUsersIds());
+                               
+                    })
                     ->filterBySearch($userFilters)
                     ->filterByTradeInfo($tradeFilters, [['status_id', '<>', 4]])
                     ->filterByManager($managerIds);

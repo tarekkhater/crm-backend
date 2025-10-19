@@ -16,7 +16,7 @@ class Kernel extends ConsoleKernel
         // Commands\LiquidateUser::class,
         // Commands\CleanExpiredOtps::class,
         // \App\Console\Commands\AssetsUpdate::class,
-         Commands\RunCurrencyBroadcast::class,
+        //  Commands\RunCurrencyBroadcast::class,
         // \App\Console\Commands\BinanceStreamCommand::class,
     ];
 

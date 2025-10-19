@@ -87,7 +87,8 @@ class TradeService
         'take_profit',
         'direction',
         'opening_price',
-        'com'
+        'com',
+        'open_at'
     ];
 
     foreach ($editableFields as $field) {

@@ -86,8 +86,8 @@ class PositionResource extends JsonResource
                 'id'  => $this->currency->id ?? null,
             ],
             'close_at'           => $this->close_at,
-            'created_at'         => $this->created_at?->toDateTimeString(),
-            'open_at'=> $this->created_at?->toDateTimeString(),
+            'created_at'         => $this->open_at?->toDateTimeString(),
+            'open_at'=> $this->open_at?->toDateTimeString(),
             'updated_at'         => $this->updated_at?->toDateTimeString(),
         ];
     }

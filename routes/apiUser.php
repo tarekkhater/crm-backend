@@ -746,7 +746,7 @@ Route::get('/permissions',function(){
         //     }
         // } 
 });
-Route::group(['middleware'=>['check.system.status','cors'],'namespace'=>'App\Http\Controllers\User'],function(){
+Route::group(['middleware'=>['check.system.status'],'namespace'=>'App\Http\Controllers\User'],function(){
 
     Route::group(['prefix'=>'Auth','namespace'=>'Auth'],function(){
         Route::post('/login',"LoginController@login")->middleware(['CheckLead']);
