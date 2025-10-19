@@ -49,7 +49,7 @@ class indexController extends Controller
         $profit = $pnl;
         $bal = $this->user->userInfo->balance;
         $equity = ($profit) + $bal;
-        
+        $total_deposit = $this->user->userInfo->awaiting_deposit;
         $data = [
             "balance"=>$this->truncate_numbert($bal,2),
             "equity"=>$this->truncate_numbert($equity,2),
@@ -57,7 +57,7 @@ class indexController extends Controller
             "bonus"=>$this->user->userInfo->bonus,
             "margin"=>$this->truncate_numbert($total_trades,2),
             "free_margin"=>$this->truncate_numbert($bal - $total_trades,2),
-            "awaiting_deposit"=>0,
+            "awaiting_deposit"=>$total_deposit,
             "free_margin_perc"=>$equity != 0 
                     ? $this->truncate_numbert((($bal - $total_trades) / $equity) * 100, 2) 
                     : 0,
