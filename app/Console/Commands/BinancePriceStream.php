@@ -1,11 +1,12 @@
 <?php
+
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use WebSocket\Client;
 use App\Events\CurrencyRateUpdated;
 
-class BinanceStreamCommand extends Command
+class BinancePriceStream extends Command
 {
     protected $signature = 'binance:stream {symbols*}';
     protected $description = 'Stream Binance prices for multiple symbols';
@@ -13,7 +14,7 @@ class BinanceStreamCommand extends Command
     public function handle()
     {
         $symbols = $this->argument('symbols');
-        $streams = implode('/', array_map(fn($s) => strtolower($s).'@trade', $symbols));
+        $streams = implode('/', array_map(fn($s) => strtolower($s) . '@trade', $symbols));
         $url = "wss://stream.binance.com:9443/stream?streams={$streams}";
 
         $this->info("Connecting to Binance WebSocket for: " . implode(', ', $symbols));
