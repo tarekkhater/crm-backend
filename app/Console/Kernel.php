@@ -29,6 +29,9 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
             $schedule->command('update_assets:cron')->everyMinute();
+            
+            // تحديث balance_yesterday يومياً - يشتغل كل يوم الساعة 11:59 مساءً
+            $schedule->command('snapshots:update-yesterday-balance')->dailyAt('23:59');
 
         //  $schedule->command('report:send')->everyMinute();
         //  $schedule->command('margin_call:cron')->everyFiveMinutes();

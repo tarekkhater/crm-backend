@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 class InfoTradeUser extends Model
 {
     use HasFactory;
-    protected $fillable =['user_id','plan_id','branch_id','status_id','campaign_id','source_id','balance','money','pnl','bonus','dob','profit','fee','withdrawable','cur'];
+    protected $fillable =['user_id','plan_id','branch_id','status_id','campaign_id','source_id','balance','balance_yesterday','money','pnl','bonus','dob','profit','fee','withdrawable','cur'];
 
 
 

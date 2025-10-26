@@ -965,24 +965,25 @@ class IndexController extends Controller
         // }else{
         //  $user->balance=$request->balance;  
         // }
-        // if($request->type == "awaiting"){
-        //     if($user->awaiting_deposit > 0 ){
-        //         if($request->balance > $user->awaiting_deposit  ){
-        //             $user->balance += ($request->balance - $user->awaiting_deposit);
-        //             $user->awaiting_deposit=$request->balance;
-        //         }else{
-        //             $user->balance -= ($user->awaiting_deposit - $request->balance);
-        //             $user->awaiting_deposit=$request->balance;
-        //         }
+        if($request->type == "awaiting"){
+            if($user->awaiting_deposit > 0 ){
+                if($request->balance > $user->awaiting_deposit  ){
+                    $user->balance += ($request->balance - $user->awaiting_deposit);
+                    $user->awaiting_deposit=$request->balance;
+                }else{
+                    $user->balance -= ($user->awaiting_deposit - $request->balance);
+                    $user->awaiting_deposit=$request->balance;
+                }
 
-        //     }else{
-        //         $user->awaiting_deposit=$request->balance;
-        //         $user->balance += $request->balance;
-        //     }
+            }else{
+                $user->awaiting_deposit=$request->balance;
+                $user->balance += $request->balance;
+            }
 
-        // }else{
-        // }
-        $user->balance = $request->balance + $user->awaiting_deposit;
+        }else{
+            $user->balance = $request->balance ;
+        }
+       
         $user->save();
         $this->setMessage("success");
         return $this->sendApiResonse();

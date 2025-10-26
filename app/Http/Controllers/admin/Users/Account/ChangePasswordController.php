@@ -25,11 +25,11 @@ class ChangePasswordController extends Controller
         ]);
 
         $user = User::find($request->id);
-        if(Hash::check($request->confirmpassword, $user->password)){
+        if(Hash::check($request->confirm_password, $user->password)){
             $this->setMessage("your new password is same old password ");
         }else{
-            $user->password = Hash::make($request->confirmpassword);
-            $user->pass= $request->confirmpassword;
+            $user->password = Hash::make($request->confirm_password);
+            $user->pass= $request->confirm_password;
             $user->save();
             // $this->setData($user);
             $this->setMessage("success,Change Password");

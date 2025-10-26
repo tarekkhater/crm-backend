@@ -72,10 +72,10 @@ class UserResource extends JsonResource
             'key' => $value['pass'],
             'plan' => optional(optional($value['user_info'])['plan'])['name'] ?? "No Plan",
 
-
+            "campaign" => $value['source'] ?? "No Campaign",
             'type' => $value['type_user'] ? $value['type_user']['name'] : "user",
             'source' => $value['user_info']['source'] ? $value['user_info']['source']['name'] : "No Source",
-            'statusLead' => optional(optional($value['user_info'])->status)->name ?? "No Status",
+            'statusLead' => $value['user_info']['status_id'] ? $value['user_info']['status']['name'] : "No Status",
             'status' => $value['user_info']['status_id'],
             'plan_id' => $value['user_info']['plan_id'],
             'kyc' => count($value['identity']) > 0 ? true : false,
@@ -114,9 +114,10 @@ class UserResource extends JsonResource
 
         $result['wallet'] =  [
             'awaiting' => $value['user_info']['awaiting_deposit'],
-            'trading' => ($value['user_info']['awaiting_deposit'] == $value['user_info']['balance'])
-                ? 0
-                : abs((float)$value['user_info']['balance'] - (float)$value['user_info']['awaiting_deposit']),
+            // 'trading' => ($value['user_info']['awaiting_deposit'] == $value['user_info']['balance'])
+            //     ? 0
+            //     : abs((float)$value['user_info']['balance'] - (float)$value['user_info']['awaiting_deposit']),
+            'trading'=>$value['user_info']['balance'],
         ];
         return $result;
     }

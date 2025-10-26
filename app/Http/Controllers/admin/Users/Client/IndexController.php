@@ -412,25 +412,23 @@ class IndexController extends Controller
     }
 
 
-     public function ExportLeads(Request $request)
+    public function ExportLeads(Request $request)
     {
-
-            $request->validate(['type' => 'required|in:0,1,2,4,5,9,10']);
-            $user = auth()->user();
-            $timestamp = now()->format('Y-m-d_H-i-s');
-            $fileName = "Users_Export_{$timestamp}.xls";
-            $filePath = "upload/excel/export/{$fileName}";
-            
-            $stored = Excel::store(new UsersClientExport($request->type), $filePath, 'public');
-            if (!$stored || !\Storage::disk('public')->exists($filePath)) {
-                throw new \Exception("Failed to create export file at path: {$filePath}");
-            }
-            
-            Mail::to("$user->email")->send(new FileSendUsers($user,$filePath));
-            $this->setMessage("success،File");
-            Storage::disk('public')->delete($filePath);
-            return $this->sendApiResonse();
-
+        $request->validate(['type' => 'required|in:0,1,2,4,5,9,10']);
+        $user = auth()->user();
+        $timestamp = now()->format('Y-m-d_H-i-s');
+        $fileName = "Users_Export_{$timestamp}.xls";
+        $filePath = "upload/excel/export/{$fileName}";
+        
+        $stored = Excel::store(new UsersClientExport($request->type), $filePath, 'public');
+        if (!$stored || !\Storage::disk('public')->exists($filePath)) {
+            throw new \Exception("Failed to create export file at path: {$filePath}");
+        }
+        
+        Mail::to("$user->email")->send(new FileSendUsers($user,$filePath));
+        $this->setMessage("success،File");
+        Storage::disk('public')->delete($filePath);
+        return $this->sendApiResonse();
     }
 
 

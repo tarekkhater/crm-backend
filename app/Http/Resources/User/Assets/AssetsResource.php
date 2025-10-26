@@ -39,6 +39,7 @@ class AssetsResource extends JsonResource
             'type'=>$value["type"],
             "ex_sym"=> $value["ex_sym"],
             "com"=> $value["com"],
+            "leverage"=> $value["leverage"],
             "rate"=> $value["rate"],
             "buy_spread"=> $value["buy_spread"],
             "sell_spread"=> $value["sell_spread"],

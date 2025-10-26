@@ -29,6 +29,30 @@ class IndexController extends Controller
 
 
     public function index(){
+            // جلب رصيد امبارح من العمود balance_yesterday (الحل الرئيسي)
+            $yesterdayBalance = $this->user->userInfo->balance_yesterday ?? 0;
+            
+            // لو رصيد امبارح = 0 أو مش موجود، نحسبه بالطريقة البديلة
+            if ($yesterdayBalance == 0) {
+                $today = \Carbon\Carbon::today();
+                
+                // الرصيد الحالي (balance + money)
+                $currentBalance = ($this->user->userInfo->balance ?? 0) + ($this->user->userInfo->money ?? 0);
+                
+                // حساب التغييرات اللي حصلت النهاردة من جدول transactions
+                $todayDeposits = \App\Models\Transaction::where('user_id', $this->user->id)
+                    ->whereIn('type', ['Deposit', 'deposit'])
+                    ->where('created_at', '>=', $today)
+                    ->sum('amount');
+                
+                $todayWithdrawals = \App\Models\Transaction::where('user_id', $this->user->id)
+                    ->whereIn('type', ['withdrawl', 'withdrawal', 'Withdrawal'])
+                    ->where('created_at', '>=', $today)
+                    ->sum('amount');
+                
+                // رصيد امبارح = الرصيد الحالي - (الإيداعات النهاردة - السحوبات النهاردة)
+                $yesterdayBalance = $currentBalance - ($todayDeposits - $todayWithdrawals);
+            }
 
             $data=[[
                 "name"=>"Actual Wallet",
@@ -37,6 +61,10 @@ class IndexController extends Controller
                 ],[
                     "name"=>"Trading Wallet",
                     "amount"=>$this->user->userInfo->balance,
+                    "cur"=>$this->user->userInfo->cur??"eg",
+                ],[
+                    "name"=>"Yesterday's Balance",
+                    "amount"=>$yesterdayBalance,
                     "cur"=>$this->user->userInfo->cur??"eg",
                 ]];
           $this->setData($data);
