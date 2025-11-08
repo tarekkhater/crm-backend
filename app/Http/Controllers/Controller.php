@@ -119,8 +119,6 @@ class Controller extends BaseController
         $crypto = file_get_contents($url);
         $usd = json_decode($crypto, true);
         return $usd['price'];
-            
-       
     }
 
 

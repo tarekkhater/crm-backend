@@ -181,7 +181,7 @@ Route::group(['namespace' => 'App\Http\Controllers\admin'], function () {
                 Route::post('{id}/replace', "IndexController@replace");
                 Route::delete('/delete-document', "IndexController@deleteDocument");
                 Route::get('/export', "IndexController@Export");
-                Route::post('/Change/Status/{id}', "IndexController@ChangeStatus");
+                Route::put('/Change/Status/{id}', "IndexController@ChangeStatus");
                 Route::post('/destroy', "IndexController@destroy");
                 Route::post('/filter', "IndexController@Filter");
                 Route::post('/filter/text', "IndexController@FilterText");
@@ -213,7 +213,7 @@ Route::group(['namespace' => 'App\Http\Controllers\admin'], function () {
             Route::post('/index/close', "IndexController@close");
             Route::post('/index/open', "IndexController@open");
             Route::post('/index/pending', "IndexController@pending");
-            Route::post('/store', "IndexController@storeTrade");
+            Route::post('/store', "IndexController@storeTrade")->middleware('check.time');
             Route::post('/update/{id}', "IndexController@update");
 
             Route::post('/delete', "IndexController@destroy");
@@ -280,7 +280,7 @@ Route::group(['namespace' => 'App\Http\Controllers\admin'], function () {
                 Route::post('/mass/mailing', "IndexController@MassMailing");
                 Route::post('/broker/notification', "IndexController@BrokerNotification");
                 Route::post('/import', "IndexController@import");
-                Route::get('/export', "IndexController@ExportLeads");
+                Route::post('/export', "IndexController@ExportLeads");
             });
             // Route::group(['prefix'=>'leads','namespace'=>'Leads'],function(){
             //     Route::resource('/',"IndexController");

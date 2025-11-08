@@ -16,7 +16,7 @@ class UpdateKYCRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => ['required','in:front_id,back_id,selfie,por,front_credit_card,back_credit_card'],
+            'name' => ['required','in:front_id,back_id,selfy,por,front_credit_card,back_credit_card'],
             // 8MB
             'file' => 'required|mimetypes:image/jpeg,image/png,image/gif,image/svg+xml,image/webp|max:8192',
         ];

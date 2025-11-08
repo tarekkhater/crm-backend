@@ -19,6 +19,8 @@ use Illuminate\Support\Str;
 use App\Http\Requests\User\Deposits\BankRequest;
 use App\Http\Requests\User\Deposits\CreditRequest;
 use App\Http\Requests\User\Deposits\USDTRequest;
+use App\Models\cryptoPayment;
+
 class IndexController extends Controller
 {
     use UploadTrait;
@@ -28,6 +30,13 @@ class IndexController extends Controller
             $deposites = Deposit::with(['user','plan','account'])->whereUserId(AuthApi()->id)->latest()->paginate(20);
             $this->setMessage("success");
             $this->setData($deposites);
+            return $this->sendApiResonse();
+        }
+
+        public function getWallets(){
+            $wallets = cryptoPayment::all();
+            $this->setMessage("success");
+            $this->setData($wallets);
             return $this->sendApiResonse();
         }
 

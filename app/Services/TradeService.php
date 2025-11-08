@@ -28,7 +28,7 @@ class TradeService
     
     public function createTrade(array $data)
     {
-             $direction = $data['direction'];
+            $direction = $data['direction'];
             $opening_price = $data['opening_price'];
             
             $stop_loss_price = null;

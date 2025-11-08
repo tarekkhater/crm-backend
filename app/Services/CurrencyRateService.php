@@ -98,7 +98,6 @@ class CurrencyRateService
             
             $api = new Oanda($oandaApi, $oandaAccount);
             $res = $api->getPrice(implode(',', $instruments));
-            Log::info('Oanda response', $res);
 
             $priceData = [];
             if (isset($res['prices']) && is_array($res['prices'])) {

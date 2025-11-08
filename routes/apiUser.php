@@ -841,6 +841,7 @@ Route::group(['middleware'=>['check.system.status'],'namespace'=>'App\Http\Contr
 
             Route::group(['prefix'=>'Deposits','namespace'=>'Deposits','middleware'=>['CheckKyc']],function(){
                 Route::resource('/',"IndexController");
+                Route::get('/wallets',"IndexController@getWallets");
                 Route::get('/index',"IndexController@index");
                 Route::post('/store/credit',"IndexController@apiStore");
                 Route::post('/store/bank',"IndexController@dStore");

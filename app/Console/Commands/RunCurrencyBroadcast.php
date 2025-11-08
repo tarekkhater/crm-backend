@@ -13,9 +13,9 @@ class RunCurrencyBroadcast extends Command
 
     private $currencyService;
     private $isRunning = true;
-    private $lastBroadcastData = [];  // نخزن آخر قيم تم بثها
-    private $lastStocksBroadcast = 0; // آخر مرة بعتنا stocks
-    private $lastFullSnapshot = 0;    // آخر مرة بعتنا snapshot كامل
+    private $lastBroadcastData = []; 
+    private $lastStocksBroadcast = 0;
+    private $lastFullSnapshot = 0;  
 
     public function __construct(CurrencyRateService $currencyService)
     {
@@ -86,9 +86,9 @@ class RunCurrencyBroadcast extends Command
     
     public function handle()
     {
-        $delay = 0.8; // تأخير بين كل check
-        $stocksInterval = 15; // نبعت stocks كل 15 ثانية
-        $snapshotInterval = 60; // نبعت snapshot كامل كل 60 ثانية
+        $delay = 0.8;
+        $stocksInterval = 15;
+        $snapshotInterval = 60;
 
         $this->info("Starting intelligent currency broadcast...");
         $this->info("→ Crypto/Forex/Indices/Commodities: every {$delay}s (only changed)");
@@ -108,21 +108,17 @@ class RunCurrencyBroadcast extends Command
                 $startTime = microtime(true);
                 $currentTime = time();
 
-                // نجيب كل الداتا
                 $allData = $this->currencyService->getAllCurrencyRates();
                 
-                // نشوف لو حان وقت full snapshot (كل دقيقة)
                 $isSnapshotTime = ($currentTime - $this->lastFullSnapshot >= $snapshotInterval);
                 
                 if ($isSnapshotTime) {
-                    // نبعت كل حاجة عشان الـ clients الجدد
                     $chunks = array_chunk($allData, $chunkSize);
                     
                     foreach ($chunks as $chunk) {
                         broadcast(new CurrencyRateUpdated($chunk));
                     }
                     
-                    // نحدث الـ cache
                     foreach ($allData as $asset) {
                         $type = $asset['type'] ?? 'other';
                         $key = "{$type}_{$asset['id']}";
@@ -134,7 +130,6 @@ class RunCurrencyBroadcast extends Command
                     $this->warn("[{$iteration}] 📸 FULL SNAPSHOT: " . count($allData) . " assets (for new clients) (took {$executionTime}ms)");
                     
                 } else {
-                    // البث العادي: بس اللي اتغير
                     $stocks = [];
                     $otherAssets = [];
                     
@@ -148,18 +143,15 @@ class RunCurrencyBroadcast extends Command
 
                     $changedAssets = [];
                     
-                    // نشوف الـ assets اللي اتغيرت (غير stocks)
                     $changedOthers = $this->getChangedAssets($otherAssets, 'other');
                     $changedAssets = array_merge($changedAssets, $changedOthers);
                     
-                    // نشوف لو وقت نبعت stocks
                     if ($currentTime - $this->lastStocksBroadcast >= $stocksInterval) {
                         $changedStocks = $this->getChangedAssets($stocks, 'stocks');
                         $changedAssets = array_merge($changedAssets, $changedStocks);
                         $this->lastStocksBroadcast = $currentTime;
                     }
 
-                    // نبعت بس اللي اتغير
                     if (!empty($changedAssets)) {
                         $chunks = array_chunk($changedAssets, $chunkSize);
 
@@ -214,7 +206,6 @@ class RunCurrencyBroadcast extends Command
             $assetId = $asset['id'];
             $key = "{$type}_{$assetId}";
             
-            // لو أول مرة نشوف الـ asset ده
             if (!isset($this->lastBroadcastData[$key])) {
                 $changedAssets[] = $asset;
                 $this->lastBroadcastData[$key] = $asset;
@@ -223,7 +214,6 @@ class RunCurrencyBroadcast extends Command
             
             $oldAsset = $this->lastBroadcastData[$key];
             
-            // نقارن الأسعار
             if ($asset['current_price'] != $oldAsset['current_price'] ||
                 $asset['buy_p'] != $oldAsset['buy_p'] ||
                 $asset['sell_p'] != $oldAsset['sell_p']) {

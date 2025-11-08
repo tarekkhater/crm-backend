@@ -53,7 +53,7 @@ class IndexController extends Controller
             $backId   = $request->file('back_id')?uploadRealImage($request->file('back_id'), 'identity/'):"hh";
             $frontCC  = $request->file('front_credit_card')?uploadRealImage($request->file('front_credit_card'), 'identity/'):"hh";
             $backCC   = $request->file('back_credit_card')?uploadRealImage($request->file('back_credit_card'), 'identity/'):"hh";
-            $selfy    = $request->file('selfie')?uploadRealImage($request->file('selfie'), 'identity/'):"hh"; // عمود DB اسمه selfy
+            $selfy    = $request->file('selfy')?uploadRealImage($request->file('selfy'), 'identity/'):"hh"; // عمود DB اسمه selfy
             $por      = $request->file('por')?uploadRealImage($request->file('por'), 'identity/'):"hh";
 
             $identity = $this->user->identity()->create([
@@ -88,26 +88,29 @@ class IndexController extends Controller
     public function update(UpdateKYCRequest $request, $id)
     {
         try {
-            $document = Document::findOrFail($id);
-
-            // خزّن ملف واحد جديد
+            $identity = Identity::findOrFail($id);
+            
+            $fieldName = $this->mapIdentityKey($request->input('name'));
+            
             $newPath = uploadRealImage($request->file('file'), 'identity/');
-
-            // احذف القديم لو موجود
-            if (!empty($document->value)) {
-                Storage::disk('public')->delete($document->value);
+            
+            $oldPath = $identity->{$fieldName};
+            if (!empty($oldPath) && $oldPath !== 'hh') {
+                $cleanPath = str_replace('storage/', '', $oldPath);
+                if (Storage::disk('public')->exists($cleanPath)) {
+                    Storage::disk('public')->delete($cleanPath);
+                }
             }
+            
+            $identity->update([$fieldName => $newPath]);
+            
+            Document::where('identity_id', $id)
+                ->where('title', $this->getDocumentTitle($fieldName))
+                ->update(['value' => $newPath]);
 
-            // حدّث Document
-            $document->update(['value' => $newPath]);
-
-            // حدّث Identity بالعمود الصحيح (selfie -> selfy)
-            $col = $this->mapIdentityKey($request->input('name'));
-            Identity::where('id', $document->identity_id)->update([$col => $newPath]);
-
-            // ممكن ترجع URL مباشرة للموبايل/الويب
             $this->setData([
                 'url' => Storage::disk('public')->url($newPath),
+                'field' => $fieldName,
             ]);
 
             $this->setMessage("success");
@@ -118,6 +121,38 @@ class IndexController extends Controller
             $this->setMessage("error: " . $e->getMessage());
             return $this->sendApiResonse();
         }
+    }
+
+private function getDocumentTitle(string $fieldName): ?string
+    {
+        $mapping = [
+            'front_id' => 'Front Id',
+            'back_id' => 'Back Id',
+            'front_credit_card' => 'Front Credit Card',
+            'back_credit_card' => 'Back Credit Card',
+            'selfy' => 'Selfie',
+            'por' => 'POR',
+        ];
+        
+        return $mapping[$fieldName] ?? null;
+    }
+
+private function getFieldNameFromTitle(?string $title): ?string
+    {
+        if (empty($title)) {
+            return null;
+        }
+
+        $mapping = [
+            'Front Id' => 'front_id',
+            'Back Id' => 'back_id',
+            'Front Credit Card' => 'front_credit_card',
+            'Back Credit Card' => 'back_credit_card',
+            'Selfie' => 'selfy',  // انتبه: العمود في DB اسمه selfy مش selfie
+            'POR' => 'por',
+        ];
+
+        return $mapping[$title] ?? null;
     }
 
     private function mapIdentityKey(string $name): string

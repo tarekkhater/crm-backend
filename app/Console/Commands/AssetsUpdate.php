@@ -44,7 +44,7 @@ class AssetsUpdate extends Command
               $curs = CurrencyPair::all();
                     foreach ($curs as $cur){
                         $rate = $controller->getCurRate($cur->sym, $cur->base, $cur->type);
-                        if($rate > 0){
+                        if($rate > 0 && $cur->rate != $rate){
                             $cur->rate = $rate;
                             $cur->save();
                         }

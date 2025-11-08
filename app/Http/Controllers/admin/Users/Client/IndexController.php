@@ -19,8 +19,6 @@ use App\Models\Message;
 use App\Models\UserManager;
 use App\Models\Permission;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\Files\FileSendUsers;
 use Illuminate\Support\Facades\Storage;
 
 class IndexController extends Controller
@@ -412,23 +410,131 @@ class IndexController extends Controller
     }
 
 
+    /**
+     * جيب قائمة الأعمدة المتاحة للـ Export
+     */
+    public function getExportableColumns()
+    {
+        $columns = [
+            ['key' => 'id', 'label' => 'ID'],
+            ['key' => 'surname', 'label' => 'Name'],
+            ['key' => 'email', 'label' => 'Email'],
+            ['key' => 'source', 'label' => 'Source'],
+            ['key' => 'status_id', 'label' => 'Status'],
+            ['key' => 'manager_id', 'label' => 'Manager'],
+            ['key' => 'balance', 'label' => 'Balance'],
+            ['key' => 'phone', 'label' => 'Phone'],
+            ['key' => 'last_comment', 'label' => 'Last Comment Date'],
+            ['key' => 'last_comment_content', 'label' => 'Last Comment'],
+            ['key' => 'plan', 'label' => 'Plan'],
+            ['key' => 'country', 'label' => 'Country'],
+            ['key' => 'campaign', 'label' => 'Campaign'],
+            ['key' => 'agent', 'label' => 'Agent'],
+            ['key' => 'created_at', 'label' => 'Created At'],
+            ['key' => 'category', 'label' => 'Category'],
+        ];
+        
+        $this->setData($columns);
+        $this->setMessage("success");
+        return $this->sendApiResonse();
+    }
+
     public function ExportLeads(Request $request)
     {
-        $request->validate(['type' => 'required|in:0,1,2,4,5,9,10']);
+        $request->validate([
+            'type' => 'required|in:0,1,2,4,5,9,10',
+            'columns' => 'nullable|array', // الأعمدة المختارة
+            'columns.*' => 'string'
+        ]);
+        
+        // تحويل الـ type لـ integer بشكل صريح
+        $exportType = (int)$request->type;
+        
+        
+        
+        // تحديد نوع الـ Export
+        $typeNames = [
+            0 => 'Leads (type_id=1)',
+            1 => 'Potential (type_id=2, status_id=4)',
+            2 => 'Active (type_id=2)',
+            4 => 'FTD',
+            5 => 'Public Customer',
+            9 => 'Archive',
+            10 => 'Leads Center'
+        ];
+        
+        
+        
         $user = auth()->user();
         $timestamp = now()->format('Y-m-d_H-i-s');
         $fileName = "Users_Export_{$timestamp}.xls";
         $filePath = "upload/excel/export/{$fileName}";
         
-        $stored = Excel::store(new UsersClientExport($request->type), $filePath, 'public');
-        if (!$stored || !\Storage::disk('public')->exists($filePath)) {
-            throw new \Exception("Failed to create export file at path: {$filePath}");
-        }
+        // جيب الأعمدة المختارة أو الأعمدة الأساسية
+        $selectedColumns = $request->has('columns') && !empty($request->columns) 
+            ? $request->columns 
+            : ['id', 'surname', 'email', 'source', 'status_id', 'balance', 'phone', 'plan', 'country'];
         
-        Mail::to("$user->email")->send(new FileSendUsers($user,$filePath));
-        $this->setMessage("success،File");
-        Storage::disk('public')->delete($filePath);
-        return $this->sendApiResonse();
+        // جمع كل الفلاتر من الـ Request
+        $filters = $request->all();
+        
+        Log::info('📋 Export Request Details:', [
+            'type' => $exportType,
+            'columns' => $selectedColumns,
+            'has_search' => isset($filters['search']),
+            'search_count' => count($filters['search'] ?? []),
+            'has_dateFilters' => isset($filters['dateFilters']),
+            'sort_by' => $filters['sort_by'] ?? 'id',
+            'sort_direction' => $filters['sort_direction'] ?? 'desc',
+        ]);
+        
+        // زود الـ memory limit
+        ini_set('memory_limit', '512M');
+        set_time_limit(300); // 5 دقائق
+        
+        // مرر الأعمدة والفلاتر للـ Export
+        try {
+            Log::info('Creating Export Object...');
+            $export = new UsersClientExport($exportType, $selectedColumns, $filters);
+            
+            Log::info('Storing Excel File...');
+            $stored = Excel::store($export, $filePath, 'public');
+            
+            if (!$stored || !Storage::disk('public')->exists($filePath)) {
+                throw new \Exception("Failed to create export file at path: {$filePath}");
+            }
+
+            // Log::info('✅ Export file created successfully, sending email...');
+            // Mail::to("tarekkhater103@gmail.com")->send(new FileSendUsers($user, $filePath));
+            // $this->setMessage("success, File sent to your email");
+            // Storage::disk('public')->delete($filePath);
+            
+            // جيب الـ URL للـ file (الـ file موجود في public/upload/excel/export/)
+            $fileUrl = asset($filePath);
+            
+            Log::info('📥 File URL generated', ['url' => $fileUrl]);
+            
+            $this->setMessage("success, File ready for download");
+            $this->setData([
+                'download_url' => $fileUrl,
+                'file_path' => $filePath,
+                'file_name' => $fileName
+            ]);
+            
+            return $this->sendApiResonse();
+            
+        } catch (\Exception $e) {
+            Log::error('❌ Export Failed', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            $this->setStatus(500);
+            $this->setMessage("Export failed: " . $e->getMessage());
+            return $this->sendApiResonse();
+        }
     }
 
 
