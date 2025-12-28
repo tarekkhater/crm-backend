@@ -746,6 +746,12 @@ Route::get('/permissions',function(){
         //     }
         // } 
 });
+
+// Hot Affiliates - Public route for registration (no authentication required)
+Route::group(['prefix' => 'hot-affiliates', 'namespace' => 'App\Http\Controllers\HotAffiliate'], function () {
+    Route::post('/store', 'IndexController@store');
+});
+
 Route::group(['middleware'=>['check.system.status'],'namespace'=>'App\Http\Controllers\User'],function(){
 
     Route::group(['prefix'=>'Auth','namespace'=>'Auth'],function(){

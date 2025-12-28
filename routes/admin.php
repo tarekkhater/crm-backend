@@ -16,6 +16,7 @@ use App\Http\Controllers\admin\ProfileController;
 use App\Http\Controllers\admin\RolesController;
 use App\Http\Controllers\admin\PermissionController;
 use App\Http\Controllers\admin\TradingHoursController;
+use App\Http\Controllers\admin\HotAffiliateController;
 use App\Models\Transaction;
 use App\Models\Deposit;
 use App\Models\User;

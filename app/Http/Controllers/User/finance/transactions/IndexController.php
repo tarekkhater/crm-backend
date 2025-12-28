@@ -42,7 +42,7 @@ class IndexController extends Controller
             foreach($withdrawals as $withdrawal){
                 $transactions['data'][]=[
                     'id'=>$withdrawal->id,
-                    'note'=>$withdrawal->account_type != null?$withdrawal->account_type:"Withdrawl",
+                    'note'=>$withdrawal->message != null?$withdrawal->message:null,
                     'type'=>"Awaiting For Withdrawl",
                     'amount'=>$withdrawal->amount,
                     'account_type'=>"withdrawl",
@@ -57,7 +57,7 @@ class IndexController extends Controller
         foreach($deposites as $deposite){
             $transactions['data'][]=[
                 'id'=>$deposite->id,
-                'note'=>$deposite->type,
+                'note'=>$deposite->message ? $deposite->message : null,
                 'type'=>$deposite->type,
                 'amount'=>$deposite->amount,
                 'account_type'=>"deposit",

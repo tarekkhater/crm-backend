@@ -27,6 +27,17 @@ Route::get('/api',function (){
     return view('home');
 });
 
+// Hot Affiliates Routes - Only for Super Admin (must be before catch-all)
+Route::group(['prefix' => 'admin/hot-affiliates', 'as' => 'admin.hot-affiliates.'], function() {
+    Route::get('/login', [\App\Http\Controllers\admin\HotAffiliateController::class, 'login'])->name('login');
+    Route::post('/login', [\App\Http\Controllers\admin\HotAffiliateController::class, 'doLogin'])->name('doLogin');
+    Route::get('/', [\App\Http\Controllers\admin\HotAffiliateController::class, 'index'])->name('index');
+    Route::get('/{id}/edit', [\App\Http\Controllers\admin\HotAffiliateController::class, 'edit'])->name('edit');
+    Route::put('/{id}', [\App\Http\Controllers\admin\HotAffiliateController::class, 'update'])->name('update');
+    Route::delete('/{id}', [\App\Http\Controllers\admin\HotAffiliateController::class, 'destroy'])->name('destroy');
+    Route::post('/logout', [\App\Http\Controllers\admin\HotAffiliateController::class, 'logout'])->name('logout');
+});
+
 Route::get('/{any}', function () {
     return view('errors.404');
 })->where('any', '.*');

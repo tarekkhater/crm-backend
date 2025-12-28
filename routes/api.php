@@ -591,6 +591,13 @@ Route::group(['namespace' => 'App\Http\Controllers\admin'], function () {
                 Route::post('/edit/{id}', 'IndexController@update');
                 Route::post('/destroy/{id}', 'IndexController@destroy');
             });
+
+            Route::group(['prefix' => 'hot-affiliates', 'namespace' => 'HotAffiliate'], function () {
+                Route::get('/', 'IndexController@index');
+                Route::get('/show/{id}', 'IndexController@show');
+                Route::post('/update/{id}', 'IndexController@update');
+                Route::post('/destroy/{id}', 'IndexController@destroy');
+            });
         });
     });
 
