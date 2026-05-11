@@ -64,22 +64,26 @@ protected $attr = ['amount'];
    
    public function getLeverageAttribute($value)
 {
-    if ($value > 0) {
-        if (auth()->check()) {
-            $user = auth()->user();
-            $lastActivePlan = $user->userInfo;
-            if ($lastActivePlan) {
-                $plan = \App\Models\planLeverag::where('plan_id',$lastActivePlan->plan_id)->where('type',$this->type)->first();
-                $features = $plan->leverag ?? $value;
-                return (int)  $features;
-            }
-            
-            return $value; // Default if no plan found
-        }
-        return $value;
-    }
-    
-    return 1;
+    // Legacy plan-based leverage logic (disabled):
+    // if ($value > 0) {
+    //     if (auth()->check()) {
+    //         $user = auth()->user();
+    //         $lastActivePlan = $user->userInfo;
+    //         if ($lastActivePlan) {
+    //             $plan = \App\Models\planLeverag::where('plan_id',$lastActivePlan->plan_id)->where('type',$this->type)->first();
+    //             $features = $plan->leverag ?? $value;
+    //             return (int)  $features;
+    //         }
+    //
+    //         return $value; // Default if no plan found
+    //     }
+    //     return $value;
+    // }
+    //
+    // return 1;
+
+    // Force same leverage for all users and all plans.
+    return 30;
 }
 
 

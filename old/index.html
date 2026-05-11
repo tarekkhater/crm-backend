@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+
+<html lang="hu">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Quantum Prime Finance</title>
+<meta content="" name="description"/>
+<meta content="" name="keywords"/>
+<!-- Favicons -->
+<link href="assets/img/logo.png" rel="icon"/>
+<link href="assets/img/apple-touch-icon.png" rel="apple-touch-icon"/>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css?family=Open+Sans:300,300i,400,400i,600,600i,700,700i|Raleway:300,300i,400,400i,500,500i,600,600i,700,700i|Poppins:300,300i,400,400i,500,500i,600,600i,700,700i" rel="stylesheet"/>
+<!-- Vendor CSS Files -->
+<link href="assets/vendor/aos/aos.css" rel="stylesheet"/>
+<link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet"/>
+<link href="assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet"/>
+<link href="assets/vendor/boxicons/css/boxicons.min.css" rel="stylesheet"/>
+<link href="assets/vendor/glightbox/css/glightbox.min.css" rel="stylesheet"/>
+<link href="assets/vendor/remixicon/remixicon.css" rel="stylesheet"/>
+<link href="assets/vendor/swiper/swiper-bundle.min.css" rel="stylesheet"/>
+<!-- Template Main CSS File -->
+<link href="assets/css/style.css" rel="stylesheet"/>
+<link crossorigin="anonymous" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" referrerpolicy="no-referrer" rel="stylesheet"/>
+<!-- Small overrides to make mobile nicer + fix hero overlap -->
+<style>
+    header.fixed-top{
+      background:rgba(0,0,0,.65);
+      backdrop-filter:saturate(180%) blur(10px);
+    }
+    /* Fallback; سيتم ضبطها ديناميكياً بالـJS أدناه */
+    body{ padding-top: 10px; overflow-x: hidden; }
+    
+    /* Reduce padding on mobile to avoid empty space */
+    @media (max-width: 991px){
+      body{ padding-top: 10px !important; }
+    }
+    @media (max-width: 576px){
+      body{ padding-top: 10px !important; }
+    }
+
+    /* Logo sizing - same as vip.html */
+    #header img{ width:150px; object-fit:contain; }
+
+    /* Hero full cover without margin-top */
+    #hero{ margin-top:0 !important; position:relative; min-height:calc(100vh - 0px); }
+    .hero-video{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; z-index:-1; }
+    #hero .container{ position:relative; z-index:1; }
+
+    /* Hide Ticker on very small screens (optional) */
+    @media (max-width: 576px){
+      .tradingview-widget-container{ display:none; }
+    }
+
+    /* Mobile-friendly text sizes in hero */
+    @media (max-width: 576px){
+      #hero h1{ font-size:28px; line-height:1.2; }
+      #hero h2{ font-size:16px; font-weight:400; opacity:.9; }
+      #hero .container{ padding:0 16px; text-align:center; }
+    }
+
+    /* Buttons crowding on mobile: keep header clean */
+    .get-started-btn{ padding:8px 16px; }
+
+    /* Touch-friendly targets */
+    button, .btn, a.btn, .navbar a{ min-height:44px; line-height:44px; }
+
+    /* Mobile form comfort */
+    @media (max-width: 576px){
+      .php-email-form{ padding:20px !important; }
+      .php-email-form .form-control{ padding:12px 14px; font-size:16px; }
+    }
+
+    /* Mobile navbar - Using same design as vip.html (from style.css) */
+    @media (max-width: 991px){
+      /* Make header full height when mobile menu is open */
+      #header:has(#navbar.navbar-mobile) {
+        height: 100% !important;
+      }
+      .navbar-mobile {
+        position: fixed !important;
+        top: 0 !important;
+        right: 0 !important;
+        left: 0 !important;
+        bottom: 0 !important;
+        height: 100% !important;
+        width: 100% !important;
+        overflow: hidden !important;
+        z-index: 999 !important;
+      }
+      .navbar-mobile ul {
+        position: absolute !important;
+        top: 55px !important;
+        right: 15px !important;
+        bottom: 15px !important;
+        left: 15px !important;
+        width: auto !important;
+        max-width: none !important;
+        height: auto !important;
+        display: block !important;
+      }
+      .navbar-mobile .dropdown ul {
+        position: static !important;
+        display: none !important;
+        margin: 10px 20px !important;
+        padding: 10px 0 !important;
+        width: auto !important;
+        max-width: none !important;
+        background: black !important;
+      }
+      .navbar-mobile .dropdown ul.dropdown-active {
+        display: block !important;
+      }
+      .navbar-mobile .dropdown > .dropdown-active {
+        display: block !important;
+      }
+      /* Remove green background from dropdown toggle links when clicked */
+      .navbar-mobile .dropdown > a:hover,
+      .navbar-mobile .dropdown > a:focus,
+      .navbar-mobile .dropdown > a:active {
+        background-color: transparent !important;
+        color: #dbdbdb !important;
+      }
+      .navbar-mobile .dropdown.active > a,
+      .navbar-mobile .dropdown.dropdown-active > a {
+        background-color: transparent !important;
+        color: #dbdbdb !important;
+      }
+    }
+
+    /* Responsive sections padding */
+    @media (max-width: 768px){
+      section{ padding: 40px 0 !important; }
+      .section-title{ font-size: 24px !important; margin-bottom: 20px !important; }
+    }
+
+    /* Footer responsive */
+    @media (max-width: 768px){
+      #footer{ padding: 30px 0 !important; }
+      #footer .footer-top .row > div{ margin-bottom: 30px; }
+    }
+
+    /* Container responsive */
+    @media (max-width: 576px){
+      .container{ padding-left: 15px !important; padding-right: 15px !important; }
+    }
+
+    /* Additional responsive improvements */
+    @media (max-width: 768px){
+      /* Cards and boxes */
+      .card, .box{ margin-bottom: 20px; }
+      
+      /* Tables responsive */
+      table{ font-size: 14px; }
+      table th, table td{ padding: 8px 4px !important; }
+      
+      /* Images */
+      img{ max-width: 100%; height: auto; }
+      
+      /* Text alignment */
+      .text-center-mobile{ text-align: center !important; }
+      
+      /* Spacing */
+      .mb-mobile{ margin-bottom: 20px !important; }
+      .mt-mobile{ margin-top: 20px !important; }
+    }
+
+    @media (max-width: 576px){
+      /* Very small screens */
+      h1{ font-size: 24px !important; }
+      h2{ font-size: 20px !important; }
+      h3{ font-size: 18px !important; }
+      h4{ font-size: 16px !important; }
+      
+      /* Buttons */
+      .btn{ padding: 10px 20px; font-size: 14px; }
+      
+      /* Grid improvements */
+      .row{ margin-left: -10px; margin-right: -10px; }
+      .row > *{ padding-left: 10px; padding-right: 10px; }
+      
+      /* Prevent horizontal scroll */
+      body{ overflow-x: hidden; }
+    }
+
+  </style>
+</head>
+<body>
+<div class="blur"></div>
+<!-- ======= Header ======= -->
+<header class="" id="header">
+<div class="container d-flex align-items-center justify-content-lg-between">
+<!-- <h1 class="logo me-auto me-lg-0"><a href="index.html">Quantum Prime Finance Limited <span>Experts In Finance Since 2016</span></a></h1> -->
+<!-- Uncomment below if you prefer to use an image logo -->
+<a class="" href="index.html"><img alt="" class="img-fluid" src="assets/main.png" style="width: 150px; object-fit: contain"/></a>
+<!-- .navbar -->
+<nav class="navbar order-last order-lg-0" id="navbar">
+<ul>
+<li><a class="nav-link scrollto active" data-i18n="nav_home" href="old/index.html">Home</a></li>
+<li>
+<a class="nav-link scrollto" data-i18n="nav_about" href="old/index.html#about">About</a>
+</li>
+<li>
+<a class="nav-link scrollto" data-i18n="nav_accounts" href="old/accounts.html">Accounts</a>
+</li>
+<li><a class="nav-link scrollto" data-i18n="nav_vip" href="old/vip.html">VIP</a></li>
+<li>
+<a class="nav-link scrollto" data-i18n="nav_education" href="old/education.html">Education</a>
+</li>
+<li class="dropdown">
+<a href="index.html#"><span data-i18n="nav_details">Details</span> <i class="bi bi-chevron-down"></i></a>
+<ul>
+<li>
+<a class="nav-link scrollto" data-i18n="nav_markets" href="old/index.html#markets">Markets</a>
+</li>
+<li>
+<a class="nav-link scrollto" data-i18n="nav_services" href="old/index.html#services">Services</a>
+</li>
+<li>
+<a class="nav-link scrollto" data-i18n="nav_features" href="old/index.html#features">Features</a>
+</li>
+<li>
+<a class="nav-link scrollto" data-i18n="nav_plans" href="old/accounts.html#pricing-plans">Plans</a>
+</li>
+</ul>
+</li>
+<li class="dropdown">
+<a href="index.html#"><span data-i18n="nav_articles">Articles</span> <i class="bi bi-chevron-down"></i></a>
+<ul>
+<li><a data-i18n="art3" href="old/art3.html">How to Become a Forex Trader</a></li>
+<li>
+<a data-i18n="art1" href="old/art1.html">20 Best Forex Trading Tools for 2025</a>
+</li>
+<li>
+<a data-i18n="art2" href="old/art2.html">3 Pivot Point Forex Trading Strategies</a>
+</li>
+<li>
+<a data-i18n="art4" href="old/art4.html">Top Reasons Why Forex Traders Fail and Lose Money</a>
+</li>
+</ul>
+</li>
+<li>
+<a class="nav-link scrollto" data-i18n="nav_contact" href="index.html#contact">Contact</a>
+</li>
+<li class="dropdown lang-switcher"><a href="#">Language <i class="bi bi-chevron-down"></i></a><ul><li><a data-setlang="en" href="#">English</a></li><li><a data-setlang="hu" href="#">Hungarian</a></li></ul></li></ul>
+<i class="bi bi-list mobile-nav-toggle" style="float: right !important"></i>
+</nav>
+<!-- .navbar -->
+<a class="get-started-btn scrollto mx-4" data-i18n="btn_get_started" href="index.html#about">Get Started</a>
+</div>
+</header>
+<!-- End Header -->
+<!-- Trading Ticker -->
+<div class="row justify-content-center mt-0 mb-1" data-aos="fade-up" data-aos-delay="150">
+<div class="col-12">
+<div class="tradingview-widget-container">
+<div class="tradingview-widget-container__widget"></div>
+<script async="" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" type="text/javascript">
+          {
+            "symbols": [
+            { "proName": "FOREXCOM:SPXUSD", "title": "S&P 500" },
+            { "proName": "FOREXCOM:NSXUSD", "title": "US 100" },
+            { "proName": "FX_IDC:EURUSD", "title": "EUR/USD" },
+            { "proName": "BITSTAMP:BTCUSD", "title": "Bitcoin" },
+            { "proName": "BITSTAMP:ETHUSD", "title": "Ethereum" },
+            { "description": "Crude Oil", "proName": "NYMEX:CL1!" },
+            { "description": "NQ", "proName": "CME_MINI:NQ1!" },
+            { "description": "Gold", "proName": "COMEX:GC1!" }
+          ],
+                  "showSymbolLogo": true,
+                  "colorTheme": "dark",
+                  "isTransparent": true,
+                  "displayMode": "adaptive",
+                  "locale": "en"
+          }
+        </script>
+</div>
+</div>
+</div>
+</header>
+<!-- End Header -->
+<!-- ======= Hero Section ======= -->
+<section class="d-flex align-items-center justify-content-center" id="hero">
+<video class="hero-video" autoplay loop muted playsinline preload="auto">
+<source src="https://static.vecteezy.com/system/protected/files/002/273/298/vecteezy_digital-animation-of-business-stock-market-price-chart_2273298.mp4" type="video/mp4"/>
+</video>
+<div class="container" data-aos="fade-up">
+<div class="row justify-content-center" data-aos="fade-up" data-aos-delay="150">
+<div class="col-xl-6 col-lg-8">
+<h1 data-i18n="hero_title">Plan Your future with <span>Quantum Prime </span></h1>
+<h2 class="text-capitalize" data-i18n="hero_sub">Get your financial Freedom</h2>
+</div>
+</div>
+<div class="row gy-4 mt-5 justify-content-center" data-aos="zoom-in" data-aos-delay="250">
+<div class="col-xl-2 col-md-4">
+<div class="icon-box">
+<i class="fas fa-clock"></i>
+<h3><a class="text-capitalize" data-i18n="hero_easy" href="#">Easy to start</a></h3>
+</div>
+</div>
+<div class="col-xl-2 col-md-4">
+<div class="icon-box">
+<i class="fas fa-hands-helping"></i>
+<h3><a class="text-capitalize" data-i18n="hero_adaptive" href="#">Fully adaptive</a></h3>
+</div>
+</div>
+<div class="col-xl-2 col-md-4">
+<div class="icon-box">
+<i class="fas fa-thumbs-up"></i>
+<h3><a class="text-capitalize" data-i18n="hero_simple" href="#">Simple to use</a></h3>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- End Hero -->
+<!-- ======= Main ======= -->
+<main id="main">
+<!-- ======= About Section ======= -->
+<section class="about" id="about">
+<div class="container" data-aos="fade-up">
+<div class="row">
+<div class="col-lg-6 order-1 order-lg-1" data-aos="fade-left" data-aos-delay="100">
+<img alt="Quantum Prime" class="" src="assets/main.png"  style="width: 550px; height: 350px; object-fit: contain">
+</div>
+<div class="col-lg-6 pt-4 pt-lg-0 order-2 order-lg-1 content" data-aos="fade-right" data-aos-delay="100">
+<h3 data-i18n="about_heading">
+            Quantum Prime is a client-oriented company, creating new possibilities in the market of leading trading technologies.
+          </h3>
+<ul>
+<li data-i18n="about_p1">
+<i class="ri-check-double-line"></i> At Quantum Prime, we've thought of everything down to the smallest detail. On
+              the road to creating a world-class trading platform, we feel
+              that it is our priority to offer the highest quality services
+              and support, including professional level tutorials,
+              analytical services, and client support.
+            </li>
+<li data-i18n="about_p2">
+<i class="ri-check-double-line"></i> Quantum Prime works
+              with clients all over the world, guaranteeing the most
+              advantageous terms and providing high quality access to the
+              world's financial markets. We build our collaboration with our
+              clients in the form of a conversation: we want to find out
+              your needs and comments, and what you would like to get from
+              working with Quantum Prime, and we want to hear it
+              directly from you.
+            </li>
+</ul>
+</div>
+</div>
+</div>
+</section>
+<!-- End About Section -->
+<!-- ======= markets Section ======= -->
+<section class="clients" id="markets">
+<div class="container" data-aos="zoom-in">
+<div class="section-title">
+<h2 data-i18n="markets_title">Some Of Our Markets</h2>
+</div>
+<div class="clients-slider swiper">
+<div class="swiper-wrapper align-items-center">
+<div class="swiper-slide">
+<div class="card text-center bg-transparent">
+<img alt="Tesla" class="img-fluid card-img-top" loading="lazy" src="https://s3-symbol-logo.tradingview.com/tesla.svg"/>
+<div class="card-body">
+<h4 class="text-capitalize card-title h6 text-light fw-bold">tesla</h4>
+</div>
+</div>
+</div>
+<div class="swiper-slide">
+<div class="card text-center bg-transparent">
+<img alt="Apple" class="img-fluid card-img-top" loading="lazy" src="https://s3-symbol-logo.tradingview.com/apple.svg"/>
+<div class="card-body">
+<h4 class="text-capitalize card-title h6 text-light fw-bold">apple</h4>
+</div>
+</div>
+</div>
+<div class="swiper-slide">
+<div class="card text-center bg-transparent">
+<img alt="Meta" class="img-fluid card-img-top" loading="lazy" src="https://s3-symbol-logo.tradingview.com/meta-platforms.svg"/>
+<div class="card-body">
+<h4 class="text-capitalize card-title h6 text-light fw-bold">Meta</h4>
+</div>
+</div>
+</div>
+<div class="swiper-slide">
+<div class="card text-center bg-transparent">
+<img alt="Bitcoin" class="img-fluid card-img-top" loading="lazy" src="https://s3-symbol-logo.tradingview.com/crypto/XTVCBTC.svg"/>
+<div class="card-body">
+<h4 class="text-capitalize card-title h6 text-light fw-bold">Bitcoin</h4>
+</div>
+</div>
+</div>
+<div class="swiper-slide">
+<div class="card text-center bg-transparent col-lg-12">
+<img alt="Crude Oil" class="img-fluid card-img-top" loading="lazy" src="https://s3-symbol-logo.tradingview.com/crude-oil.svg"/>
+<div class="card-body">
+<h4 class="text-capitalize card-title h6 text-light fw-bold">crude oil</h4>
+</div>
+</div>
+</div>
+<div class="swiper-slide">
+<div class="card text-center bg-transparent">
+<img alt="Ethereum" class="img-fluid card-img-top" loading="lazy" src="https://s3-symbol-logo.tradingview.com/crypto/XTVCETH.svg"/>
+<div class="card-body">
+<h4 class="text-capitalize card-title h6 text-light fw-bold">ethereum</h4>
+</div>
+</div>
+</div>
+<div class="swiper-slide">
+<div class="card text-center bg-transparent">
+<img alt="Gold" class="img-fluid card-img-top" loading="lazy" src="https://s3-symbol-logo.tradingview.com/metal/gold.svg"/>
+<div class="card-body">
+<h4 class="text-capitalize card-title h6 text-light fw-bold">gold</h4>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-3 swiper-pagination"></div>
+</div>
+</div>
+</section>
+<!-- End markets Section -->
+<!-- ======= Services Section ======= -->
+<section class="services" id="services">
+<div class="container" data-aos="fade-up">
+<div class="section-title">
+<h2 data-i18n="advantages_title">Advantages</h2>
+<p data-i18n="advantages_sub">Check Our Advantages</p>
+</div>
+<div class="row">
+<div class="col-lg-3 col-md-4 col-xs-4 d-flex align-items-stretch m-auto" data-aos="zoom-in" data-aos-delay="100">
+<div class="icon-box" style="background-color: transparent; min-width: 250px; border: transparent;">
+<div class="icon"><i class="fas fa-yen-sign"></i></div>
+<h4><a data-i18n="srv_variety" href="#">Variety of assets</a></h4>
+</div>
+</div>
+<div class="col-lg-3 col-md-4 d-flex align-items-stretch mt-md-0" data-aos="zoom-in" data-aos-delay="200">
+<div class="icon-box" style="background-color: transparent; min-width: 250px; border: transparent;">
+<div class="icon"><i class="fas fa-shield-alt"></i></div>
+<h4><a data-i18n="srv_safety" href="#">Safety and security of funds</a></h4>
+</div>
+</div>
+<div class="col-lg-3 col-md-4 d-flex align-items-stretch mt-lg-0" data-aos="zoom-in" data-aos-delay="300">
+<div class="icon-box" style="background-color: transparent; min-width: 250px; border: transparent;">
+<div class="icon"><i class="fas fa-chart-line"></i></div>
+<h4><a data-i18n="srv_signals" href="#">Trading signals and investment projects</a></h4>
+</div>
+</div>
+<div class="col-lg-3 col-md-4 d-flex align-items-stretch" data-aos="zoom-in" data-aos-delay="200">
+<div class="icon-box" style="background-color: transparent; min-width: 250px; border: transparent;">
+<div class="icon"><i class="fas fa-project-diagram"></i></div>
+<h4><a data-i18n="srv_flexible" href="#">Flexible trading conditions</a></h4>
+</div>
+</div>
+<div class="col-lg-3 col-md-4 d-flex align-items-stretch" data-aos="zoom-in" data-aos-delay="100">
+<div class="icon-box" style="background-color: transparent; min-width: 250px; border: transparent;">
+<div class="icon"><i class="fas fa-user-graduate"></i></div>
+<h4><a data-i18n="srv_education" href="#">Education</a></h4>
+</div>
+</div>
+<div class="col-lg-3 col-md-4 d-flex align-items-stretch" data-aos="zoom-in" data-aos-delay="300">
+<div class="icon-box" style="background-color: transparent; min-width: 250px; border: transparent;">
+<div class="icon"><i class="fas fa-umbrella"></i></div>
+<h4><a data-i18n="srv_negative" href="#">Negative balance protection</a></h4>
+</div>
+</div>
+<div class="col-lg-3 col-md-4 d-flex align-items-stretch" data-aos="zoom-in" data-aos-delay="300">
+<div class="icon-box" style="background-color: transparent; min-width: 250px; border: transparent;">
+<div class="icon"><i class="fas fa-business-time"></i></div>
+<h4><a data-i18n="srv_support" href="#">Individuals support 24/5</a></h4>
+</div>
+</div>
+<div class="col-lg-3 col-md-4 d-flex align-items-stretch" data-aos="zoom-in" data-aos-delay="300">
+<div class="icon-box" style="background-color: transparent; min-width: 250px; border: transparent;">
+<div class="icon"><i class="fas fa-users"></i></div>
+<h4><a data-i18n="srv_team" href="#">Professional team of experts</a></h4>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- End Services Section -->
+<!-- ======= VIP Section ======= -->
+<section class="cta" id="vip">
+<div class="container" data-aos="zoom-in">
+<div class="text-center">
+<h3 data-i18n="vip_title">VIP status. VIP services</h3>
+<p data-i18n="vip_text">
+          Reach the highest trader status and access exclusive Quantum  
+          Prime features and services. Become a member of a private club
+          for VIP traders. Get special offers from the platform.
+        </p>
+<a class="cta-btn" data-i18n="vip_btn" href="vip.html">Get VIP</a>
+</div>
+</div>
+</section>
+<!-- End VIP Section -->
+<!-- ======= Features Section ======= -->
+<section class="features my-5" id="features">
+<div class="container" data-aos="fade-up">
+<div class="section-title">
+<h2 data-i18n="features_title">Features</h2>
+<p data-i18n="features_sub">Our Main Features</p>
+</div>
+<div class="row">
+<div class="image col-lg-6 order-lg-2" data-aos="fade-right" style="background-image: url('assets/img/hero.webp'); background-size: contain; filter: drop-shadow(30px); display:none"></div>
+<div class="col-lg-6" data-aos="fade-left" data-aos-delay="100">
+<div class="icon-box mt-5 mt-lg-0" data-aos="zoom-in" data-aos-delay="150">
+<i class="bx bx-calendar"></i>
+<h4 data-i18n="feat_news">Breaking Financial News</h4>
+<p data-i18n="feat_news_text">Trade with the same news and updates as professional traders</p>
+</div>
+<div class="icon-box mt-5" data-aos="zoom-in" data-aos-delay="150">
+<i class="bx bx-chart"></i>
+<h4 data-i18n="feat_ta">World-Class Technical Analysis</h4>
+<p data-i18n="feat_ta_text">Optimise your trading with actionable technical analysis</p>
+</div>
+<div class="icon-box mt-5" data-aos="zoom-in" data-aos-delay="150">
+<i class="fas fa-dashboard mx-0" style="font-size: 40px"></i>
+<h4 data-i18n="feat_sentiment">Market Sentiment Visualisation</h4>
+<p data-i18n="feat_sentiment_text">
+              Trade using market sentiment data, based on the latest breaking news
+            </p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- End Features Section -->
+<!-- ======= Contact Section ======= -->
+<section class="contact" id="contact">
+<div class="container" data-aos="fade-up">
+<div class="section-title">
+<h2 data-i18n="contact_title">Contact</h2>
+<p data-i18n="contact_sub">Contact Us</p>
+</div>
+<div>
+<iframe allowfullscreen="" frameborder="0" src="https://www.google.com/maps?q=K%C3%A1roly+k%C3%B6r%C3%BAt+10,+Budapest+1052,+Hungary&output=embed" style="border: 0; width: 100%; height: 270px"></iframe>
+</div>
+<div class="row mt-5">
+<div class="col-lg-4">
+<div class="info">
+<div class="address">
+<i class="bi bi-geo-alt"></i>
+<h4 data-i18n="contact_loc">Location:</h4>
+<p>1052 Budapest, Károly körút 10., Hungary</p>
+</div>
+<div class="email">
+<i class="bi bi-envelope"></i>
+<h4 data-i18n="contact_email">Email:</h4>
+<p>info@quantumprime.app</p>
+</div>
+<div class="phone">
+<i class="bi bi-phone"></i>
+<h4 data-i18n="contact_call">Call:</h4>
+<p>447300493691</p>
+</div>
+</div>
+</div>
+<div class="col-lg-8 mt-5 mt-lg-0">
+<form action="forms/contact.php" class="php-email-form p-5 m-0" method="post" role="form">
+<div class="row">
+<div class="col-md-6 form-group">
+<input class="form-control" data-i18n-placeholder="form_name" id="name" name="name" placeholder="Enter Your Name" required="" type="text"/>
+</div>
+<div class="col-md-6 form-group mt-3 mt-md-0">
+<input class="form-control" data-i18n-placeholder="form_email" id="email" name="email" placeholder="Your Email" required="" type="email"/>
+</div>
+</div>
+<div class="form-group mt-3">
+<input class="form-control" data-i18n-placeholder="form_subject" id="subject" name="subject" placeholder="Subject" required="" type="text"/>
+</div>
+<div class="form-group mt-3">
+<textarea class="form-control" data-i18n-placeholder="form_message" name="message" placeholder="Message" required="" rows="5"></textarea>
+</div>
+<div class="my-3">
+<div class="loading" data-i18n="form_loading">Loading</div>
+<div class="error-message" data-i18n="form_error"></div>
+<div class="sent-message" data-i18n="form_sent">
+                Your message has been sent. Thank you!
+              </div>
+</div>
+<div class="text-center">
+<button data-i18n="btn_send" type="submit">Send Message</button>
+</div>
+</form>
+</div>
+</div>
+</div>
+</section>
+<!-- End Contact Section -->
+</main>
+<!-- End #main -->
+<!-- ======= Footer ======= -->
+<footer id="footer">
+<div class="footer-top">
+<div class="container">
+<div class="row">
+<div class="col-lg-4 col-md-6">
+<div class="footer-info">
+<h3>Quantum Prime<span> Finance Limited</span></h3>
+<p>
+              1052 Budapest, Károly körút 10., Hungary
+              <br/><br/>
+<strong>Phone:</strong> 447300493691<br/>
+<strong>Email:</strong> info@quantumprime.app<br/>
+</p>
+<div class="social-links mt-3">
+<a class="twitter" href="#"><i class="bx bxl-twitter"></i></a>
+<a class="facebook" href="#"><i class="bx bxl-facebook"></i></a>
+<a class="instagram" href="#"><i class="bx bxl-instagram"></i></a>
+<a class="google-plus" href="#"><i class="bx bxl-skype"></i></a>
+<a class="linkedin" href="#"><i class="bx bxl-linkedin"></i></a>
+</div>
+</div>
+</div>
+<div class="col-lg-4 col-md-6 footer-links">
+<h4 data-i18n="footer_links"></h4>
+<ul>
+<li><i class="bx bx-chevron-right"></i> <a data-i18n="nav_home" href="/"></a></li>
+<li><i class="bx bx-chevron-right"></i> <a data-i18n="footer_about" href="/#about"></a></li>
+<li><i class="bx bx-chevron-right"></i> <a data-i18n="nav_markets" href="/#markets"></a></li>
+<li><i class="bx bx-chevron-right"></i> <a data-i18n="nav_services" href="/#services"></a></li>
+<li><i class="bx bx-chevron-right"></i> <a data-i18n="nav_accounts" href="/old/accounts.html"></a></li>
+<li><i class="bx bx-chevron-right"></i> <a data-i18n="nav_vip" href="/old/vip.html"></a></li>
+<li><i class="bx bx-chevron-right"></i> <a data-i18n="nav_education" href="/old/education.html"></a></li>
+<li><i class="bx bx-chevron-right"></i> <a data-i18n="nav_features" href="/#features"></a></li>
+<li><i class="bx bx-chevron-right"></i> <a data-i18n="nav_plans" href="/old/accounts.html#pricing-plans"></a></li>
+<li><i class="bx bx-chevron-right"></i> <a data-i18n="footer_terms" href="#"></a></li>
+<li><i class="bx bx-chevron-right"></i> <a data-i18n="footer_privacy" href="#"></a></li>
+</ul>
+</div>
+<div class="col-lg-4 col-md-6 footer-newsletter">
+<h4 data-i18n="risk_title"></h4>
+<p data-i18n="risk_text"></p>
+</div>
+</div>
+</div>
+<div class="container">
+<div class="copyright">
+        © Copyright <strong><span>Quantum Prime</span></strong>. All Rights Reserved
+      </div>
+<div class="credits">Designed by <a href="#">Quantum Prime</a></div>
+</div>
+</div>
+</footer>
+<!-- End Footer -->
+<div id="preloader"></div>
+<a class="back-to-top d-flex align-items-center justify-content-center" href="#"><i class="bi bi-arrow-up-short"></i></a>
+<!-- Vendor JS Files -->
+<script src="assets/vendor/purecounter/purecounter_vanilla.js"></script>
+<script src="assets/vendor/aos/aos.js"></script>
+<script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="assets/vendor/glightbox/js/glightbox.min.js"></script>
+<script src="assets/vendor/isotope-layout/isotope.pkgd.min.js"></script>
+<script src="assets/vendor/swiper/swiper-bundle.min.js"></script>
+<script src="assets/vendor/php-email-form/validate.js"></script>
+<!-- i18n + layout helpers -->
+<script>
+  // ===== Dynamic header padding to avoid hero overlap =====
+  function padBodyForFixedHeader(){
+    const header = document.getElementById('header');
+    if(!header) return;
+    const headerHeight = header.offsetHeight;
+    
+    // Reduce padding on mobile screens
+    if(window.innerWidth <= 991) {
+      if(window.innerWidth <= 576) {
+        document.body.style.paddingTop = '10px';
+      } else {
+        document.body.style.paddingTop = '10px';
+      }
+    } else {
+      document.body.style.paddingTop = '10px';
+    }
+  }
+  window.addEventListener('load', padBodyForFixedHeader);
+  window.addEventListener('resize', padBodyForFixedHeader);
+  
+  // Make header full height when mobile menu is open
+  const navbar = document.getElementById('navbar');
+  const header = document.getElementById('header');
+  const mobileToggle = document.querySelector('.mobile-nav-toggle');
+  
+  if (navbar && header && mobileToggle) {
+    // Watch for navbar-mobile class changes
+    const observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+          if (navbar.classList.contains('navbar-mobile')) {
+            header.classList.add('navbar-mobile-active');
+          } else {
+            header.classList.remove('navbar-mobile-active');
+          }
+        }
+      });
+    });
+    observer.observe(navbar, { attributes: true });
+    
+    // Also handle toggle button clicks
+    mobileToggle.addEventListener('click', function() {
+      setTimeout(function() {
+        if (navbar.classList.contains('navbar-mobile')) {
+          header.classList.add('navbar-mobile-active');
+        } else {
+          header.classList.remove('navbar-mobile-active');
+        }
+      }, 10);
+    });
+  }
+
+  // ===== i18n dictionary =====
+  const i18n = {
+    en: {
+      doc_title: "Quantum Prime Finance",
+      nav_home: "Home",
+      nav_about: "About",
+      nav_accounts: "Accounts",
+      nav_vip: "VIP",
+      nav_education: "Education",
+      nav_details: "Details",
+      nav_markets: "Markets",
+      nav_services: "Services",
+      nav_features: "Features",
+      nav_plans: "Plans",
+      nav_articles: "Articles",
+      nav_contact: "Contact",
+      btn_get_started: "Get Started",
+      btn_register: "Register",
+
+      hero_title: "Plan Your future with <span>Quantum Prime </span>",
+      hero_sub: "Get your financial Freedom",
+      hero_easy: "Easy to start",
+      hero_adaptive: "Fully adaptive",
+      hero_simple: "Simple to use",
+
+      about_heading: "Quantum Prime is a client-oriented company, creating new possibilities in the market of leading trading technologies.",
+      about_p1: "At Quantum Prime, we've thought of everything down to the smallest detail. On the road to creating a world-class trading platform, we feel that it is our priority to offer the highest quality services and support, including professional level tutorials, analytical services, and client support.",
+      about_p2: "Quantum Prime works with clients all over the world, guaranteeing the most advantageous terms and providing high quality access to the world's financial markets. We build our collaboration with our clients in the form of a conversation: we want to find out your needs and comments, and what you would like to get from working with Quantum Prime, and we want to hear it directly from you.",
+
+      markets_title: "Some Of Our Markets",
+
+      advantages_title: "Advantages",
+      advantages_sub: "Check Our Advantages",
+
+      vip_title: "VIP status. VIP services",
+      vip_text: "Reach the highest trader status and access exclusive LANCASTER CHAMBER features and services. Become a member of a private club for VIP traders. Get special offers from the platform.",
+      vip_btn: "Get VIP",
+
+      features_title: "Features",
+      features_sub: "Our Main Features",
+      feat_news: "Breaking Financial News",
+      feat_news_text: "Trade with the same news and updates as professional traders",
+      feat_ta: "World-Class Technical Analysis",
+      feat_ta_text: "Optimise your trading with actionable technical analysis",
+      feat_sentiment: "Market Sentiment Visualisation",
+      feat_sentiment_text: "Trade using market sentiment data, based on the latest breaking news",
+
+      srv_variety: "Variety of assets",
+      srv_safety: "Safety and security of funds",
+      srv_signals: "Trading signals and investment projects",
+      srv_flexible: "Flexible trading conditions",
+      srv_education: "Education",
+      srv_negative: "Negative balance protection",
+      srv_support: "Individuals support 24/5",
+      srv_team: "Professional team of experts",
+
+      contact_title: "Contact",
+      contact_sub: "Contact Us",
+      contact_loc: "Location:",
+      contact_email: "Email:",
+      contact_call: "Call:",
+
+      form_name: "Enter Your Name",
+      form_email: "Your Email",
+      form_subject: "Subject",
+      form_message: "Message",
+      form_loading: "Loading",
+      form_sent: "Your message has been sent. Thank you!",
+      form_error: "",
+
+      footer_links: "Useful Links",
+      footer_about: "About us",
+      footer_terms: "Terms of service",
+      footer_privacy: "Privacy policy",
+
+      art1: "20 Best Forex Trading Tools for 2025",
+      art2: "3 Pivot Point Forex Trading Strategies",
+      art3: "How to Become a Forex Trader",
+      art4: "Top Reasons Why Forex Traders Fail and Lose Money",
+
+      risk_title: "Risk disclosure",
+      risk_text: `Investing in high-risk groups: (Forex) and contracts for difference (CFD) is a speculative transaction with high risk, which is not suitable for every investor. You may incur partial or total loss of your investment, so we do not advise you to invest capital that you cannot risk. You should be aware of the increased risk associated with leverage. We strongly recommend that you familiarize yourself with the terms and services of our website before you start using our service.<br /><br /><span class="text-success fw-bold">Quantum Prime</span> services are operated by <span class="fw-bold">Zenit Holding Zrt.</span><br/> <span class="fw-bold">Zenit Holding </span> <span>Investment Private Limited Company </span> <br /><span class="fw-bold"> Registered Office:</span> 1052 Budapest, Károly körút 10., Hungary
+Company Registration No.: 01-10-046016 | Tax No.: 14099230241.<br /> <span> Main Activity: Asset Management (Holding Company)
+Founded: 2007</span>`,
+
+      btn_send: "Send Message"
+    },
+
+    hu: {
+      doc_title: "Quantum Prime Finance",
+      nav_home: "Főoldal",
+      nav_about: "Rólunk",
+      nav_accounts: "Számlák",
+      nav_vip: "VIP",
+      nav_education: "Oktatás",
+      nav_details: "Részletek",
+      nav_markets: "Piacok",
+      nav_services: "Szolgáltatások",
+      nav_features: "Funkciók",
+      nav_plans: "Csomagok",
+      nav_articles: "Cikkek",
+      nav_contact: "Kapcsolat",
+      btn_get_started: "Kezdés",
+      btn_register: "Regisztráció",
+
+      hero_title: "Tervezd meg jövődet a <span>Quantum Prime</span> segítségével",
+      hero_sub: "Szerezd meg pénzügyi szabadságod",
+      hero_easy: "Könnyű kezdeni",
+      hero_adaptive: "Teljes mértékben alkalmazkodó",
+      hero_simple: "Egyszerű használat",
+
+      about_heading: "A Quantum Prime egy ügyfélközpontú vállalat, amely új lehetőségeket teremt a vezető kereskedési technológiák piacán.",
+      about_p1: "A Quantum Prime-nál minden részletre gondoltunk. Világszínvonalú kereskedési platform létrehozása során prioritásunk a legmagasabb színvonalú szolgáltatások és támogatás nyújtása, beleértve a professzionális szintű oktatóanyagokat, elemző szolgáltatásokat és ügyféltámogatást.",
+      about_p2: "A Quantum Prime világszerte dolgozik ügyfelekkel, garantálva a legkedvezőbb feltételeket és magas minőségű hozzáférést a világ pénzügyi piacaihoz. Együttműködésünket beszélgetés formájában építjük fel: szeretnénk megtudni az igényeit és észrevételeit, valamint azt, hogy mit szeretne elérni a Quantum Prime-nel való együttműködésből, és ezt közvetlenül Öntől szeretnénk hallani.",
+
+      markets_title: "Piacaink közül néhány",
+
+      advantages_title: "Előnyök",
+      advantages_sub: "Tekintse meg előnyeinket",
+
+      vip_title: "VIP státusz. VIP szolgáltatások",
+      vip_text: "Érd el a legmagasabb kereskedő státuszt és férj hozzá exkluzív Quantum Prime funkciókhoz és szolgáltatásokhoz. Válj privát VIP kereskedők klubjának tagjává. Élvezd a platform különleges ajánlatait.",
+      vip_btn: "Légy VIP",
+
+      features_title: "Funkciók",
+      features_sub: "Fő funkcióink",
+      feat_news: "Friss pénzügyi hírek",
+      feat_news_text: "Kereskedj ugyanazokkal a hírekkel és frissítésekkel, mint a professzionális kereskedők",
+      feat_ta: "Világszínvonalú műszaki elemzés",
+      feat_ta_text: "Optimalizáld kereskedésedet akcióképes műszaki elemzésekkel",
+      feat_sentiment: "Piaci hangulat vizualizáció",
+      feat_sentiment_text: "Kereskedj piaci hangulati adatok alapján, a legfrissebb hírek alapján",
+
+      srv_variety: "Sokfajta eszköz",
+      srv_safety: "Alapok biztonsága és védelme",
+      srv_signals: "Kereskedési jelek és befektetési projektek",
+      srv_flexible: "Rugalmas kereskedési feltételek",
+      srv_education: "Oktatás",
+      srv_negative: "Negatív egyenleg védelem",
+      srv_support: "Egyéni támogatás 24/5",
+      srv_team: "Professzionális szakértői csapat",
+
+      contact_title: "Kapcsolat",
+      contact_sub: "Vegyen fel velünk a kapcsolatot",
+      contact_loc: "Helyszín:",
+      contact_email: "E-mail:",
+      contact_call: "Telefon:",
+
+      form_name: "Adja meg a nevét",
+      form_email: "Az Ön e-mail címe",
+      form_subject: "Tárgy",
+      form_message: "Üzenet",
+      form_loading: "Betöltés",
+      form_sent: "Üzenete elküldve. Köszönjük!",
+      form_error: "",
+
+      footer_links: "Hasznos linkek",
+      footer_about: "Rólunk",
+      footer_terms: "Szolgáltatási feltételek",
+      footer_privacy: "Adatvédelmi irányelvek",
+
+      art1: "A 20 legjobb Forex kereskedési eszköz 2025-höz",
+      art2: "3 Pivot Point Forex kereskedési stratégia",
+      art3: "Hogyan válj Forex kereskedővé",
+      art4: "A fő okok, amiért a Forex kereskedők veszítenek pénzt",
+
+      risk_title: "Kockázatnyilatkozat",
+      risk_text: `A magas kockázatú eszközökbe, például a Forex-be és a különbözeti szerződésekbe (CFD) való befektetés spekulatív tranzakció magas kockázattal, amely nem megfelelő minden befektető számára. Részleges vagy teljes veszteség érheti befektetését, ezért nem javasoljuk, hogy olyan tőkét fektessen be, amit nem engedhet meg magának, hogy elveszítse. Tisztában kell lennie a tőkeáttétellel járó fokozott kockázattal. Határozottan ajánljuk, hogy ismerkedjen meg weboldalunk feltételeivel és szolgáltatásaival, mielőtt elkezdené szolgáltatásaink használatát.<br /><br /><span class="text-success fw-bold">Quantum Prime</span> szolgáltatásait a <span class="fw-bold">Zenit Holding Zrt.</span> üzemelteti. <br/> <span class="fw-bold">Zenit Holding </span> <span>Befektetési Zártkörűen Működő Részvénytársaság. </span><br/> <span class="fw-bold"> Székhely:</span> 1052 Budapest, Károly körút 10.
+Cégjegyzékszám: 01-10-046016 | Adószám: 14099230241.<br /> <span> Fő tevékenység: Vagyonkezelés (holding)
+Alapítva: 2007</span>`,
+
+      btn_send: "Üzenet küldése"
+    }
+  };
+
+  // ===== i18n helpers =====
+  function setLang(lang){
+    // Normalize language code
+    lang = (lang || 'hu').toLowerCase();
+    if (lang !== 'en' && lang !== 'hu') {
+      lang = 'hu';
+    }
+    
+    const dict = i18n[lang] || i18n.hu;
+    document.documentElement.lang = lang;
+    document.title = dict.doc_title || "Quantum Prime Finance";
+
+    // Function to update all translations - called multiple times to ensure all elements are updated
+    function updateAllTranslations() {
+      // InnerHTML translations - force update ALL elements with data-i18n attribute
+      document.querySelectorAll("[data-i18n]").forEach(el=>{
+        const key = el.getAttribute("data-i18n");
+        if (!key) return;
+        
+        // Get translation from current language dict, fallback to Hungarian
+        let translation = dict[key];
+        if (translation === undefined || translation === null) {
+          translation = i18n.hu[key];
+        }
+        
+        // Always update if translation exists (forces update even for empty elements)
+        if (translation !== undefined && translation !== null) {
+          el.innerHTML = translation;
+        }
+      });
+    }
+    
+    // Update immediately - FIRST PASS
+    updateAllTranslations();
+
+    // Update placeholder / value attributes
+    const attrMaps = [
+      ["[data-i18n-placeholder]","placeholder"],
+      ["[data-i18n-value]","value"]
+    ];
+    attrMaps.forEach(([sel,attr])=>{
+      document.querySelectorAll(sel).forEach(el=>{
+        const key = el.getAttribute(`data-i18n-${attr}`);
+        const txt = dict[key] ?? i18n.en[key];
+        if (txt) el.setAttribute(attr, txt);
+      });
+    });
+
+    // Update active language indicator in menu
+    document.querySelectorAll("[data-setlang]").forEach(btn => {
+      const btnLang = btn.getAttribute("data-setlang");
+      // Find parent <li> element
+      let li = btn.parentElement;
+      while (li && li.tagName !== 'LI') {
+        li = li.parentElement;
+      }
+      
+      if (btnLang === lang) {
+        btn.classList.add("active");
+        if (li) li.classList.add("active");
+      } else {
+        btn.classList.remove("active");
+        if (li) li.classList.remove("active");
+      }
+    });
+    
+    // Force multiple updates to ensure ALL elements are updated (especially Footer)
+    setTimeout(() => updateAllTranslations(), 10);  // Second pass
+    setTimeout(() => updateAllTranslations(), 50);  // Third pass
+    setTimeout(() => updateAllTranslations(), 100); // Fourth pass - catches Footer elements
+
+    // Save language preference
+    localStorage.setItem("lang", lang);
+    // Also save as site_lang for compatibility
+    localStorage.setItem("site_lang", lang);
+  }
+
+  // Apply language from ?lang= or localStorage
+  function initLang(){
+    const urlParams = new URLSearchParams(location.search);
+    const qLang = urlParams.get("lang");
+    const stored = localStorage.getItem("lang");
+    const lang = (qLang || stored || "hu").toLowerCase();
+    setLang(lang);
+  }
+
+  // Switcher buttons - handle clicks and update immediately
+  document.addEventListener("click", (e)=>{
+    // Check if clicked element or its parent has data-setlang
+    let target = e.target;
+    let langBtn = null;
+    
+    // Check the clicked element itself
+    if (target && target.hasAttribute && target.hasAttribute("data-setlang")) {
+      langBtn = target;
+    }
+    // Check parent <li> element
+    else if (target && target.parentElement) {
+      let parent = target.parentElement;
+      if (parent.tagName === 'LI' && parent.hasAttribute && parent.hasAttribute("data-setlang")) {
+        langBtn = parent;
+      }
+      // Check <a> tag inside <li>
+      else if (target.tagName === 'A' && target.parentElement && target.parentElement.tagName === 'LI' && 
+               target.parentElement.hasAttribute && target.parentElement.hasAttribute("data-setlang")) {
+        langBtn = target.parentElement;
+      }
+    }
+    
+    if (langBtn) {
+      e.preventDefault();
+      e.stopPropagation();
+      const lang = langBtn.getAttribute("data-setlang");
+      if (lang) {
+        // Update immediately - no refresh needed
+        setLang(lang);
+        // Force additional update to ensure Footer and all elements are updated
+        setTimeout(() => setLang(lang), 30);
+        setTimeout(() => setLang(lang), 100);
+      }
+      return false;
+    }
+  }, true); // Use capture phase to catch clicks early
+
+  // Initialize language on page load
+  function initializeLanguage() {
+    const urlParams = new URLSearchParams(location.search);
+    const qLang = urlParams.get("lang");
+    const storedLang = localStorage.getItem("lang") || localStorage.getItem("site_lang");
+    const lang = (qLang || storedLang || "hu").toLowerCase();
+    setLang(lang);
+    
+    // Call setLang again after a short delay to ensure all elements are updated
+    setTimeout(() => {
+      setLang(lang);
+    }, 150);
+  }
+
+  // Initialize immediately if DOM is ready, otherwise wait for DOMContentLoaded
+  if (document.readyState === 'loading') {
+    document.addEventListener("DOMContentLoaded", () => {
+      initializeLanguage();
+    });
+  } else {
+    // DOM already loaded
+    initializeLanguage();
+  }
+</script>
+<!-- Template Main JS File -->
+<script src="assets/js/main.js"></script>
+<!-- i18n.js removed - using inline i18n code instead -->
+</body>
+</html>

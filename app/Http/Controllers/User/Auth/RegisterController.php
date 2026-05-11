@@ -66,12 +66,21 @@ class RegisterController extends Controller
              }
             
             
-    Mail::to("$request->email")->send(new OTPAccountVerified($user,$code));
+    // Mail::to("$request->email")->send(new OTPAccountVerified($user,$code));
     
     if($request->type_account == 0){
          Mail::to("austingreer290@yahoo.com")->send(new NewUserDemo($user));
     }
     
+    // Generate token and login user after registration
+    $token = JWTAuth::fromUser($user);
+    $user->no_of_logins = '1';
+    $user->save();
+    $user->token = $token;
+    $user->load('identity');
+    Cookie::queue("jwt", $token, 60);
+    
+    $this->setData(new LoginResource($user));
     $this->setMessage("success");
     return $this->sendApiResonse();
 
