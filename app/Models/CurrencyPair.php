@@ -15,8 +15,14 @@ class CurrencyPair extends Model
 
     protected $casts = [
         'leverage' => 'integer',
-        'disabled' => 'boolean'
+        'disabled' => 'boolean',
+        'sort_order' => 'integer',
     ];
+
+    public function scopeOrderedForDisplay($query)
+    {
+        return $query->orderBy('sort_order')->orderBy('id');
+    }
 protected $attr = ['amount'];
 
     protected static function booted()

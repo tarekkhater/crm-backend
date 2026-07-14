@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Withdrawal;
+use App\Services\Users\UserWalletService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 
@@ -28,13 +29,17 @@ class WithdrawalController extends Controller
 
             if($data['status'] == 'approved'){
                 if($wd->approved < 1){
-                    $user->userInfo->balance = $user->aBalance() - $wd->amount;
+                    $user->load('userInfo');
+                    if (!$user->userInfo || !UserWalletService::applyDebit($user->userInfo, (float) $wd->amount)) {
+                        DB::rollback();
+                        return response()->json(['message' => 'Insufficient balance for withdrawal'], 422);
+                    }
+                    $user->userInfo->save();
                 }
                 $wd->approved = 1;
             }
 
             $wd->save();
-            $user->save();
 
             DB::commit();
             return $this->successResponse('Successfully Updated Withdrawal!', $wd);

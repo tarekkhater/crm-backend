@@ -1,4 +1,4 @@
-     
+﻿     
         @extends('EmailsNew.layouts.app')
         @section('main-content') 
           <section>
@@ -6,9 +6,9 @@
       text-align: left;
     width: 100%;
     margin-top: 15px;
-    background-color: #F0E9FF;
+    background-color: {{ config('email-branding.colors.highlight_bg') }};
     padding: 10px;
-    border: 1px solid #F0E9FF;
+    border: 1px solid {{ config('email-branding.colors.highlight_bg') }};
     border-radius: 5px;
       ">
         <div style="    font-size: 18px;font-weight: 400;line-height: 21.78px;">
@@ -22,7 +22,7 @@
             Hi <b style="font-weight : 700;font-size: 18px;line-height: 21.78px;font-family: system-ui;">{{$data['user']->name}} {{$data['user']->surname}}.</b>
           </p>
           <p style="margin-top : 10px;" class="text-[#242052CC]">
-            We received a request to reset your password for your quantumprime account. Please use the following code to reset your password:
+            We received a request to reset your password for your Paradox Investing account. Please use the following code to reset your password:
             <p style="font-weight : 700;font-size: 37px;line-height: 21.78px;text-align:center">
                 <b>{{$data['code']}}</b>
             </p>

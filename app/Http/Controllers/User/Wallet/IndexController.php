@@ -12,6 +12,7 @@ use App\Models\IBClient;
 use App\Models\IBRequest;
 use App\Models\User;
 use App\Models\InfoTradeUser;
+use App\Services\Users\UserWalletService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use App\Rules\ReverseValue;
@@ -29,6 +30,9 @@ class IndexController extends Controller
 
 
     public function index(){
+            UserWalletService::ensureSynced($this->user->userInfo);
+            $tradingBalance = UserWalletService::mainBalance($this->user->userInfo);
+
             // جلب رصيد امبارح من العمود balance_yesterday (الحل الرئيسي)
             $yesterdayBalance = $this->user->userInfo->balance_yesterday ?? 0;
             
@@ -37,7 +41,7 @@ class IndexController extends Controller
                 $today = \Carbon\Carbon::today();
                 
                 // الرصيد الحالي (balance + money)
-                $currentBalance = ($this->user->userInfo->balance ?? 0) + ($this->user->userInfo->money ?? 0);
+                $currentBalance = $tradingBalance + ($this->user->userInfo->money ?? 0);
                 
                 // حساب التغييرات اللي حصلت النهاردة من جدول transactions
                 $todayDeposits = \App\Models\Transaction::where('user_id', $this->user->id)
@@ -60,7 +64,7 @@ class IndexController extends Controller
                 "cur"=>$this->user->userInfo->cur ??"eg",
                 ],[
                     "name"=>"Trading Wallet",
-                    "amount"=>$this->user->userInfo->balance,
+                    "amount"=>$tradingBalance,
                     "cur"=>$this->user->userInfo->cur??"eg",
                 ],[
                     "name"=>"Yesterday's Balance",
@@ -135,9 +139,10 @@ class IndexController extends Controller
             }
         }
         if($data['from'] == 2){
-            if($data['amount'] > $this->user->userInfo->balance ){
+            $tradingBal = UserWalletService::mainBalance($this->user->userInfo);
+            if($data['amount'] > $tradingBal ){
                 $this->setStatus(422);
-                $this->setMessage("must amount less then Trading  " . $this->user->userInfo->balance);
+                $this->setMessage("must amount less then Trading  " . $tradingBal);
                 return $this->sendApiResonse();
             }
         }
@@ -150,18 +155,20 @@ class IndexController extends Controller
         ]);
         if($data['from'] == 2){
             $userInfo = InfoTradeUser::where('user_id',$this->user->id)->first();
-            // $userInfo->balance -= (int)$data['amount'];
-            // $userInfo->money += (int)$data['amount'];
-             $userInfo->update([
-                'balance'=>(int)$userInfo->balance - (int)$data['amount'],
-                'money'=>(int)$userInfo->money + (int)$data['amount']
-            ]);
+            $amount = (float) $data['amount'];
+            if (!\App\Services\Users\UserWalletService::applyDebit($userInfo, $amount)) {
+                $this->setStatus(422);
+                $this->setMessage('must amount less then Trading ' . \App\Services\Users\UserWalletService::mainBalance($userInfo));
+                return $this->sendApiResonse();
+            }
+            $userInfo->money = (int) $userInfo->money + (int) $amount;
+            $userInfo->save();
         }else{
             $userInfo = InfoTradeUser::where('user_id',$this->user->id)->first();
-            $userInfo->update([
-                'balance'=>(int)$userInfo->balance + (int)$data['amount'],
-                'money'=>(int)$userInfo->money - (int)$data['amount']
-            ]);
+            $amount = (float) $data['amount'];
+            \App\Services\Users\UserWalletService::applyCreditToMain($userInfo, $amount);
+            $userInfo->money = (int) $userInfo->money - (int) $amount;
+            $userInfo->save();
             // $userInfo->balance += (int)$data['amount'];
             // $userInfo->money -= (int)$data['amount'];
             // $userInfo->save();

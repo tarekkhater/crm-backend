@@ -1,4 +1,4 @@
-     
+﻿     
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -57,7 +57,7 @@
           <div>
             <h3
               style="
-                background-color: #f0e9ff;
+                background-color: {{ config('email-branding.colors.highlight_bg') }};
                 padding: 10px 20px;
                 font-size: 18px;
                 border-radius: 6px;

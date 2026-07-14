@@ -12,6 +12,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Schema;
 use App\Models\User;
 use App\Models\Transaction;
+use App\Services\Users\UserWalletService;
 use App\Models\UserManager;
 
 class IndexController extends Controller
@@ -147,7 +148,11 @@ class IndexController extends Controller
 
         if ($data['status'] == 'approved') {
             if ($wd->approved < 1) {
-                $user->userInfo->balance = $user->aBalance() - $wd->amount;
+                $user->load('userInfo');
+                if (!$user->userInfo || !UserWalletService::applyDebit($user->userInfo, (float) $wd->amount)) {
+                    return redirect()->back()->with('failure', 'Insufficient balance for withdrawal');
+                }
+                $user->userInfo->save();
             }
             $wd->approved = 1;
         }elseif ($data['status'] == 'declined') {
@@ -155,8 +160,6 @@ class IndexController extends Controller
         }
 
         $wd->save();
-
-       $user->save();
 
        Transaction::create(['user_id' => $data['user_id'], 'amount' => $data['amount'], 'type' => 'deposit', 'account_type' => 'balance','note' => 'deposit']);
 

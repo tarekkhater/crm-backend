@@ -14,6 +14,7 @@ use Schema;
 use App\Models\User;
 use App\Models\Transaction;
 use App\Models\UserManager;
+use App\Services\Users\UserWalletService;
 
 class IndexController extends Controller
 {
@@ -160,10 +161,11 @@ class IndexController extends Controller
         $data = $request->all();
 
         $user = User::findOrFail($data['user_id']);
+        $user->load('userInfo');
 
-        $user->userInfo->balance = $user->userInfo->balance + $data['amount'];
-
-        $user->save();
+        UserWalletService::ensureSynced($user->userInfo);
+        UserWalletService::applyCreditToMain($user->userInfo, (float) $data['amount']);
+        $user->userInfo->save();
 
         Transaction::create(['user_id' => $data['user_id'], 'amount' => $data['amount'], 'type' => 'deposit', 'account_type' => 'balance', 'note' => 'deposit']);
 

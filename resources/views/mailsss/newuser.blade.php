@@ -1,4 +1,4 @@
-@extends('mails.layouts.app')
+﻿@extends('mails.layouts.app')
 @section('main-content') 
       <table width="100%" cellpadding="0" cellspacing="0" dir="ltr">
         <tr>
@@ -14,7 +14,7 @@ background-color: #d1eae3;
 border-radius: 5px;
 ">
                 <div style="color:rgb(0, 0, 0);font-size: 22px;font-weight: 400;line-height: 21.78px;">
-                  Your quantumprime Account Credentials
+                  Your Paradox Investing Account Credentials
                   </span>
                 </div>
               </div>
@@ -93,7 +93,7 @@ For security reasons, we recommend changing your password after your first login
     font-weight: 700;
     line-height: 26px;"><b style="font-family: system-ui;color:#037353;">Enter the code </b>Go to the account verification page.
               <br />
-              <span style="font-family: system-ui;color:#037353;">trade.quantumprime.com</span>
+              <span style="font-family: system-ui;color:#037353;">trade.Paradox Investing.com</span>
             </p>
 
           </td>

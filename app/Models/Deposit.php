@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\Users\UserWalletService;
 use Illuminate\Database\Eloquent\Model;
 
 class Deposit extends Model
@@ -90,6 +91,31 @@ class Deposit extends Model
             return asset($value);
         }
         return null;
+    }
+
+    /**
+     * API/display: map legacy deposit types (fake → mup, awaiting_deposit → credit, etc.).
+     */
+    public function getTypeAttribute($value)
+    {
+        if ($value === null || $value === '') {
+            return $value;
+        }
+
+        return UserWalletService::normalizeType((string) $value) ?? $value;
+    }
+
+    /**
+     * Persist canonical wallet type names.
+     */
+    public function setTypeAttribute($value): void
+    {
+        if ($value === null || $value === '') {
+            $this->attributes['type'] = $value;
+            return;
+        }
+
+        $this->attributes['type'] = UserWalletService::normalizeType((string) $value) ?? $value;
     }
 
 }

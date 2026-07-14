@@ -8,29 +8,27 @@
 text-align: left;
 width: 90%;
 margin-top: 15px;
-background-color: #d1eae3;
+background-color: {{ config('email-branding.colors.highlight_bg') }};
     padding: 10px;
-    border: 1px solid #d1eae3;
+    border: 1px solid {{ config('email-branding.colors.highlight_bg') }};
 border-radius: 5px;
 ">
                 <div style="color:rgb(0, 0, 0);font-size: 22px;font-weight: 400;line-height: 21.78px;">
-                  Your quantumprime Account Credentials
+                  Your Paradox Investing Account Credentials
                   </span>
                 </div>
               </div>
               <main style="text-align : start; padding-left : 20px; padding-left : 20px;">
                 <div class="my-8 grid grid-cols-1 gap-6" style="text-align:left">
-                  <p style="color:#011610;    font-size: 22px;
+                  <p style="color:{{ config('email-branding.colors.text') }};    font-size: 22px;
     font-weight: 400;">
                     Hello <b
-                      style="color:#037353;font-weight : 700;font-size: 18px;line-height: 21.78px;font-family: system-ui;">{{$data['user']->name}} {{$data['user']->surname}}.</b>
+                      style="color:{{ config('email-branding.colors.accent') }};font-weight : 700;font-size: 18px;line-height: 21.78px;font-family: system-ui;">{{$data['user']->name}} {{$data['user']->surname}}.</b>
                   </p>
-                  <p style="margin-top : 10px;color:#011610;    font-size: 22px;
-    font-weight<p style="margin-top : 10px;color:#011610;    font-size: 22px;
-    font-weight: 500;" class="text-[#242052CC]">
+                  <p style="margin-top : 10px;color:{{ config('email-branding.colors.text') }}; font-size: 22px; font-weight: 500;" class="text-[#242052CC]">
                    We're excited to have you join us. Your account has been successfully created, and you're now ready to start trading. Here are your account details:
                   </p>
-                  <p style="margin-top : 10px;color:#011610;    font-size: 22px;
+                  <p style="margin-top : 10px;color:{{ config('email-branding.colors.text') }};    font-size: 22px;
     font-weight: 500;" class="text-[#242052CC]">
                    Account details:
                   </p>
@@ -44,7 +42,7 @@ border-radius: 5px;
         <tr>
           <t style="text-align:center;">
 
-           <p style="font-weight : 700;font-size: 22px;line-height: 21.78px;text-align:left;color:#037353;   
+           <p style="font-weight : 700;font-size: 22px;line-height: 21.78px;text-align:left;color:{{ config('email-branding.colors.accent') }};   
 padding: 10px;
 ;
 ">
@@ -74,7 +72,7 @@ For security reasons, we recommend changing your password after your first login
           </td>
         </tr>
         <tr>
-          <td style="font-family: system-ui;color:#011610;width:100%;text-align:left;">
+          <td style="font-family: system-ui;color:{{ config('email-branding.colors.text') }};width:100%;text-align:left;">
             <b>Get started in three easy steps:</b>
           </td>
         </tr>
@@ -87,13 +85,13 @@ For security reasons, we recommend changing your password after your first login
             <img src="{{asset('Emails/lock-svg.png')}}"
               style="margin-left:4px;width: 55%;height: 80%;" alt="illustration-1" />
           </td>
-          <td style="align-content:center!important;color:#011610;text-align:left;
+          <td style="align-content:center!important;color:{{ config('email-branding.colors.text') }};text-align:left;
             font-size: 17px;direction:ltr">
             <p style="    font-size: 16px;
     font-weight: 700;
-    line-height: 26px;"><b style="font-family: system-ui;color:#037353;">Enter the code </b>Go to the account verification page.
+    line-height: 26px;"><b style="font-family: system-ui;color:{{ config('email-branding.colors.accent') }};">Enter the code </b>Go to the account verification page.
               <br />
-              <span style="font-family: system-ui;color:#037353;">trade.quantumprime.app</span>
+              <span style="font-family: system-ui;color:{{ config('email-branding.colors.accent') }};">trade.Paradox Investing.app</span>
             </p>
 
           </td>
@@ -105,11 +103,11 @@ For security reasons, we recommend changing your password after your first login
             <img src="{{asset('Emails/codes-svg.png')}}"
               style="margin-left:4px;width: 55%;height: 80%;" alt="illustration-1" />
           </td>
-          <td style="align-content:center!important;color:#011610;text-align:left;
+          <td style="align-content:center!important;color:{{ config('email-branding.colors.text') }};text-align:left;
             font-size: 17px;direction:ltr">
             <p style="    font-size: 16px;
     font-weight: 700;
-    line-height: 26px;"><b style="font-family: system-ui;color:#037353;">Enter the code </b>Enter the code above.</p>
+    line-height: 26px;"><b style="font-family: system-ui;color:{{ config('email-branding.colors.accent') }};">Enter the code </b>Enter the code above.</p>
 
           </td>
          
@@ -120,11 +118,11 @@ For security reasons, we recommend changing your password after your first login
             <img src="{{asset('Emails/passwords-svg.png')}}"
               style="margin-left:4px;width: 55%;height: 80%;" alt="illustration-1" />
           </td>
-          <td style="align-content:center!important;color:#011610;text-align:left; 
+          <td style="align-content:center!important;color:{{ config('email-branding.colors.text') }};text-align:left; 
             font-size: 17px;direction:ltr">
             <p style="    font-size: 16px;
     font-weight: 700;
-    line-height: 26px;"><b style="font-family: system-ui;color:#037353;"> Confirm your account verification
+    line-height: 26px;"><b style="font-family: system-ui;color:{{ config('email-branding.colors.accent') }};"> Confirm your account verification
 </b>Follow the instructions
               <br />
 Login.

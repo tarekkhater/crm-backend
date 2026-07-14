@@ -5,7 +5,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="Content-Language" content="en">
-  <title>Quantum Prime؟</title>
+  <title>{{ \App\Helpers\EmailBranding::companyName() }}</title>
 
   <style>
     .footertext {
@@ -86,7 +86,7 @@
         <tr>
           <td style="width: 100%;        text-align: right;">
             <a href="#">
-              <img src="https://backend.bbstechnology.net/Emails/logo-light.png" alt="tailwindtaplogo"
+              <img src="{{ \App\Helpers\EmailBranding::logoUrl() }}" alt="tailwindtaplogo"
                 style="width:153px;justify-content: center;" />
             </a>
           </td>
@@ -100,9 +100,9 @@
 text-align: right;
 width: 90%;
 margin-top: 15px;
-background-color: #d1eae3;
+background-color: {{ config('email-branding.colors.highlight_bg') }};
     padding: 10px;
-    border: 1px solid #d1eae3;
+    border: 1px solid {{ config('email-branding.colors.highlight_bg') }};
 border-radius: 5px;
 ">
                 <div style="color:rgb(0, 0, 0);font-size: 22px;font-weight: 400;line-height: 21.78px;">
@@ -112,15 +112,15 @@ border-radius: 5px;
               </div>
               <main style="text-align : start; padding-right : 20px; padding-right : 20px;">
                 <div class="my-8 grid grid-cols-1 gap-6" style="text-align:right">
-                  <p style="color:#011610;    font-size: 22px;
+                  <p style="color:{{ config('email-branding.colors.text') }};    font-size: 22px;
     font-weight: 400;">
                     مرحبا <b
-                      style="color:#037353;font-weight : 700;font-size: 18px;line-height: 21.78px;font-family: system-ui;">amr
+                      style="color:{{ config('email-branding.colors.accent') }};font-weight : 700;font-size: 18px;line-height: 21.78px;font-family: system-ui;">amr
                       gamal.</b>
                   </p>
-                  <p style="margin-top : 10px;color:#011610;    font-size: 22px;
+                  <p style="margin-top : 10px;color:{{ config('email-branding.colors.text') }};    font-size: 22px;
     font-weight: 500;" class="text-[#242052CC]">
-                    لقد تلقينا طلبًا لإعادة تعيين كلمة المرور لحسابك في Quantum Prime. <br />يرجى استخدام الكود التالي
+                    لقد تلقينا طلبًا لإعادة تعيين كلمة المرور لحسابك في Paradox Investing. <br />يرجى استخدام الكود التالي
                     لإعادة
                     تعيين كلمة المرور:
               </main>
@@ -133,7 +133,7 @@ border-radius: 5px;
         <tr>
           <t style="text-align:center;">
 
-            <p style="font-weight : 700;font-size: 37px;line-height: 21.78px;text-align:center;color:#037353;   
+            <p style="font-weight : 700;font-size: 37px;line-height: 21.78px;text-align:center;color:{{ config('email-branding.colors.accent') }};   
 padding: 10px;
 ;
 ">
@@ -146,7 +146,7 @@ padding: 10px;
       </table>
       <table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="justify-self: anchor-center;">
         <tr>
-          <td style="font-family: system-ui;color:#011610;width:100%;text-align:right;">
+          <td style="font-family: system-ui;color:{{ config('email-branding.colors.text') }};width:100%;text-align:right;">
             <b>ابدأ بثلاث خطوات سهلة:</b>
           </td>
         </tr>
@@ -154,14 +154,14 @@ padding: 10px;
 
       <table width="100%" cellpadding="0" cellspacing="0" dir="ltr" style="justify-self: anchor-center;margin-top:5px;">
         <tr>
-          <td style="align-content:center!important;color:#011610;text-align:right;
+          <td style="align-content:center!important;color:{{ config('email-branding.colors.text') }};text-align:right;
             font-size: 17px;direction:rtl">
             <p style="    font-size: 16px;
     font-weight: 700;
-    line-height: 26px;"><b style="font-family: system-ui;color:#037353;">أدخل الرمز </b>انتقل إلى صفحة إعادة تعيين كلمة
+    line-height: 26px;"><b style="font-family: system-ui;color:{{ config('email-branding.colors.accent') }};">أدخل الرمز </b>انتقل إلى صفحة إعادة تعيين كلمة
               المرور.
               <br />
-              <span style="font-family: system-ui;color:#037353;">trade.quantumprime.com</span>
+              <span style="font-family: system-ui;color:{{ config('email-branding.colors.accent') }};">trade.Paradox Investing.com</span>
             </p>
 
           </td>
@@ -172,11 +172,11 @@ padding: 10px;
         </tr>
 
         <tr>
-          <td style="align-content:center!important;color:#011610;text-align:right;
+          <td style="align-content:center!important;color:{{ config('email-branding.colors.text') }};text-align:right;
             font-size: 17px;direction:rtl">
             <p style="    font-size: 16px;
     font-weight: 700;
-    line-height: 26px;"><b style="font-family: system-ui;color:#037353;">أدخل الرمز </b>أدخل الرمز الموجود أعلاه.</p>
+    line-height: 26px;"><b style="font-family: system-ui;color:{{ config('email-branding.colors.accent') }};">أدخل الرمز </b>أدخل الرمز الموجود أعلاه.</p>
 
           </td>
           <td style="margin-right:4px;width: 13%;height: 8%;     text-align: center;">
@@ -187,11 +187,11 @@ padding: 10px;
 
         <tr>
 
-          <td style="align-content:center!important;color:#011610;text-align:right; 
+          <td style="align-content:center!important;color:{{ config('email-branding.colors.text') }};text-align:right; 
             font-size: 17px;direction:rtl">
             <p style="    font-size: 16px;
     font-weight: 700;
-    line-height: 26px;"><b style="font-family: system-ui;color:#037353;">إنشاء كلمة مرور جديدة</b> اتبع التعليمات الي
+    line-height: 26px;"><b style="font-family: system-ui;color:{{ config('email-branding.colors.accent') }};">إنشاء كلمة مرور جديدة</b> اتبع التعليمات الي
               <br />
               تعين كلمة مرور جديدة.
             </p>
@@ -213,7 +213,7 @@ padding: 10px;
                 <td style="width:100%;text-align:right;display:flex" id="text-inside">
                   <div class="text-white" style="color:#fff;width:70%;">
                     <h2 style="font-size: 29px;
-                    font-weight: 700;" class="text-[25px] font-semibold">شكرا لاختيارك Quantum Prime</h2>
+                    font-weight: 700;" class="text-[25px] font-semibold">شكرا لاختيارك Paradox Investing</h2>
                     <p class="text-[14px]" style="    font-size: 19px;
     font-weight: 500;
     line-height: 40px;    width: 89%;">
@@ -221,12 +221,12 @@ padding: 10px;
                     </p>
                   
                   </div>
-                   <a href="https://quantumprime.com"
+                   <a href="https://Paradox Investing.com"
                     style="font-size: 18px;
                         height: max-content;
                         margin: auto;
-                    font-weight: 500;background-color:#037353;color:#fff;padding:10px 48px;border:1px solid #037353;border-radius:5px;text-decoration: none;"
-                    class="bg-white color-black hover:text-white hover:bg-[#0070E4] rounded-sm py-2 px-8">ابدأ
+                    font-weight: 500;background-color:{{ config('email-branding.colors.accent') }};color:#fff;padding:10px 48px;border:1px solid {{ config('email-branding.colors.accent') }};border-radius:5px;text-decoration: none;"
+                    class="bg-white color-black hover:text-white hover:bg-[{{ config('email-branding.colors.primary') }}] rounded-sm py-2 px-8">ابدأ
                     الآن</a>
                 </td>
               </tr>
@@ -254,13 +254,13 @@ padding: 10px;
 
       <table width="100%" cellpadding="0" cellspacing="0" dir="rtl" style="margin-top:10px;">
         <tr>
-          <td style="background-color:#037353;color:#fff;    padding: 36px 36px 0px;
+          <td style="background-color:{{ config('email-branding.colors.accent') }};color:#fff;    padding: 36px 36px 0px;
           margin-top:4px; border-radius:1px;" dir="rtl">
 
             <div class="px-6 my-4" style="text-align : center;    font-size: 14px;
     font-weight: 400;
     line-height: 18px;">
-              لقد تلقيت هذا البريد لأنك قمت بالتسجيل للانضمام إلى منصة Quantum Prime كمستخدم أو منشئ. وهذا يوضح أيضًا أنك
+              لقد تلقيت هذا البريد لأنك قمت بالتسجيل للانضمام إلى منصة Paradox Investing كمستخدم أو منشئ. وهذا يوضح أيضًا أنك
               توافق
               على شروط الاستخدام وسياسات الخصوصية الخاصة بنا. إذا كنت لم تعد ترغب في تلقي رسائل البريد الإلكتروني منا،
               فانقر فوق رابط إلغاء الاشتراك أدناه لإلغاء الاشتراك.
@@ -270,7 +270,7 @@ padding: 10px;
                 <span class="underline underline-offset-4"> +41 44 214 62 62 </span>
                 <img src="https://backend.bbstechnology.net/Emails/Ellipse.png" alt="illustration-1" class="w-1"
                   style=" align-self: center; " />
-                <span class="underline underline-offset-4" style="color:#fff;"> info@quantumprime.com </span>
+                <span class="underline underline-offset-4" style="color:#fff;"> info@Paradox Investing.com </span>
                 <img src="https://backend.bbstechnology.net/Emails/Ellipse.png" alt="illustration-1" class="w-1"
                   style=" align-self: center; " />
                 <span class="underline underline-offset-4">HCQ6+MC5، مسقط 132، عُمان New Work Business Center - Oman
@@ -281,7 +281,7 @@ padding: 10px;
             <div class="px-2 my-8 text-[12px]" style="text-align : right;    font-size: 12px;
     font-weight: 400;
     line-height: 21px;">
-              <span class="">@2025 جميع الحقوق محفوظه لمنصه Quantum Prime</span>
+              <span class="">@2025 جميع الحقوق محفوظه لمنصه Paradox Investing</span>
             </div>
           </td>
         </tr>

@@ -42,75 +42,54 @@ class IndexController extends Controller
     }
     public function all(Request $request){
 
-        $users = Admin::whereIn('id',getAgentsIds())->select('id','email','country')->get();
-        $ids = [];
-        if(isset($request->id)){
-            $ids = UserManager::where('admin_id',$request->id)->pluck('user_id');
-        }else{
-            $ids = UserManager::select()->pluck('user_id');
-        }
-        // $users = Admin::whereIn('id',$ids)->where('type_id',6)->get();
-        // $this->setData($users);
-        $ids = getTeamLeaderIds();
-        if(auth()->user()->type_id == 3){
-            $users = Admin::whereIn('id',$ids)->select(
-    'id',
-    DB::raw("CONCAT(name, ' ', surname) as email"),
-    'country'
-)->whereIn('type_id',[6,7,8])->get();
-        }else{
-            if($request->type ==1){
-                $users = Admin::whereIn('id',$ids)->select(
-    'id',
-    DB::raw("CONCAT(name, ' ', surname) as email"),
-    'country'
-)->where('type_id',6)->where('sub_type_id',7)->get();
-                $this->setData($users);
+        $ids   = getTeamLeaderIds();
+        $query = Admin::whereIn('id', $ids)->select(
+            'id',
+            DB::raw("CONCAT(name, ' ', surname) as email"),
+            'country'
+        );
 
-        }elseif($request->type ==7){
-                $users = Admin::whereIn('id',$ids)->select(
-    'id',
-    DB::raw("CONCAT(name, ' ', surname) as email"),
-    'country'
-)->where('type_id',6)->get();
-                if(auth()->user()->type_id == 6){
-                    $users = Admin::whereIn('id',$ids)->select(
-    'id',
-    DB::raw("CONCAT(name, ' ', surname) as email"),
-    'country'
-)->where('type_id',auth()->user()->sub_type_id)->get();
+        switch ((string) $request->type) {
+            case '1':
+                // Conversion team leaders
+                $users = (clone $query)->where('type_id', 6)->where('sub_type_id', 7)->get();
+                break;
+
+            case '7':
+                if ((int) auth()->user()->type_id === 6) {
+                    // Team leader: self + agents on their desk
+                    $users = (clone $query)->whereIn('type_id', [6, 7, 8])->get();
+                } elseif (in_array((int) auth()->user()->type_id, [7, 8], true)) {
+                    // Agent: only themselves
+                    $users = (clone $query)->get();
+                } else {
+                    // Super admin / desk manager: conversion TLs + conversion agents
+                    $users = (clone $query)->where(function ($q) {
+                        $q->where(function ($inner) {
+                            $inner->where('type_id', 6)->where('sub_type_id', 7);
+                        })->orWhere('type_id', 7);
+                    })->get();
                 }
-                $this->setData($users);
+                break;
 
-        }else{
-                $users = Admin::whereIn('id',$ids)->select(
-    'id',
-    DB::raw("CONCAT(name, ' ', surname) as email"),
-    'country'
-)->where('type_id',6)->where('sub_type_id',8)->get();
-                if(auth()->user()->type_id == 6){
-                    $users = Admin::whereIn('id',$ids)->select(
-    'id',
-    DB::raw("CONCAT(name, ' ', surname) as email"),
-    'country'
-)->where('type_id',auth()->user()->sub_type_id)->get();
+            default:
+                if ((int) auth()->user()->type_id === 3) {
+                    // Admin / desk manager: conversion TLs + conversion agents
+                    $users = (clone $query)->where(function ($q) {
+                        $q->where(function ($inner) {
+                            $inner->where('type_id', 6)->where('sub_type_id', 7);
+                        })->orWhere('type_id', 7);
+                    })->get();
+                } elseif (in_array((int) auth()->user()->type_id, [7, 8], true)) {
+                    // Agent: only themselves
+                    $users = (clone $query)->get();
+                } else {
+                    // Retention team leaders
+                    $users = (clone $query)->where('type_id', 6)->where('sub_type_id', 8)->get();
                 }
-                $this->setData($users);
-
+                break;
         }
-        }
-        
-        
-        
-        // if(auth()->user()->type_id == 3){
-        //     if($request->type == 7){
-        //         $users = Admin::select('id','email','country')->where('type_id',6)->where('sub_type_id',7)->orWhere('type_id',7)->get();
-        //     }else{
-        //         $users = Admin::select('id','email','country')->where('type_id',6)->where('sub_type_id',8)->orWhere('type_id',8)->get();
-        //     }
-        // }
 
-        
         $this->setData($users);
         $this->setMessage("success");
         return $this->sendApiResonse();
@@ -416,8 +395,12 @@ class IndexController extends Controller
     }
 
     public function customers(){
-        $pluckId = AgentUser::where('agent_type','1')->pluck('user_id');
-        $users = User::whereNotIn('id',$pluckId)->with(['countries'])->where('type_id',2)->get();
+        $assignedIds = AgentUser::where('agent_type','1')->pluck('user_id');
+        $users = User::whereIn('id', getUsersIds())
+                     ->whereNotIn('id', $assignedIds)
+                     ->with(['countries'])
+                     ->where('type_id', 2)
+                     ->get();
         $this->setData($users);
         $this->setMessage("success");
         return $this->sendApiResonse();

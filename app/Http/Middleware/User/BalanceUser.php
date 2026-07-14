@@ -11,6 +11,8 @@ use Illuminate\Contracts\Validation\Validator;
 use App\Rules\NoHtmlInjection;
 use App\Rules\CheckBalanceUser;
 use App\Models\Position;
+use App\Services\Users\UserWalletService;
+
 class BalanceUser
 {
     /**
@@ -28,7 +30,13 @@ class BalanceUser
             ->whereNull('close_at') // More idiomatic than '->where('close_at', null)'
             ->sum('trade_amount');
         
-        if ((float) $user->userInfo->balance <= (float) $totalTradeAmount) {
+        if (!$user->userInfo) {
+            return $next($request);
+        }
+
+        $mainBalance = UserWalletService::mainBalance($user->userInfo);
+
+        if ($mainBalance <= (float) $totalTradeAmount) {
             $response = [
                 "message" => 'Your total open trade amount exceeds or matches your current balance.',
                 "status" => 422,
@@ -57,7 +65,7 @@ class BalanceUser
         // قيمة الصفقة
         // $trade_amount = (($request->lot * $request->amount) * $request->opening_price) / $request->leverage;
         
-        if($user->userInfo->balance <= $request->total){
+        if ($mainBalance <= $request->total) {
             $response = [
                 "message"   =>'The Current balance Trade.',
                 "status"=>422,

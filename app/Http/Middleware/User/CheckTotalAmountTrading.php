@@ -9,6 +9,8 @@ use App\Models\ActiveUser;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Contracts\Validation\Validator;
 use App\Models\Position;
+use App\Services\Users\UserWalletService;
+
 class CheckTotalAmountTrading
 {
     /**
@@ -25,7 +27,7 @@ class CheckTotalAmountTrading
         $user = Auth::user('apiUser');
         $user->load('userInfo');
         $totalAmount = Position::whereUserId($user->id)->whereNull('close_at')->sum('trade_amount');;
-        if($totalAmount >= $user->userInfo->balance){
+        if($totalAmount >= UserWalletService::mainBalance($user->userInfo)){
              $response = [
                 "message"   =>"Your Account Total Balance in trade bigger or equal you Balance",
                 "status"=>422,

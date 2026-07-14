@@ -167,10 +167,10 @@ public function filterText(){
             'user_id' => 'required|numeric|exists:users,id',
             'coinId' => 'required|numeric|exists:currency_pairs,id',
             'type' => 'required',
-            'is_take_profit' => 'required',
-            'is_stop_loss' => 'required',
-            'stop_loss' => 'required',
-            'take_profit' => 'required',
+            // 'is_take_profit' => 'required',
+            // 'is_stop_loss' => 'required',
+            // 'stop_loss' => 'required',
+            // 'take_profit' => 'required',
             'duration' => 'required|numeric',
         ]);
         $user = user::find($request['user_id']);
@@ -485,9 +485,9 @@ public function filterText(){
             }
         }
         $user = User::findOrFail($user_id);
-        if ($user->userInfo->balance < 0) {
-            $user->userInfo->balance = 0;
-            $user->save();
+        if ($user->userInfo && \App\Services\Users\UserWalletService::mainBalance($user->userInfo) < 0) {
+            \App\Services\Users\UserWalletService::resetMainWallets($user->userInfo);
+            $user->userInfo->save();
         }
         return response()->json($trades);
     }
@@ -582,15 +582,9 @@ public function filterText(){
             if (strtolower($trade->trade_type) == 'buy') {
                  
                 if ($trade->opening_price > $trade->closing_price) {
-                      
-                                        $user->userInfo->balance += ($trade->traded_amount - $pl);
-                                        $user->userInfo->balance += ($trade->traded_amount - $pl);
-                                        $user->save();
 
                     $msg = 'Traded  ' . optional($trade->currency)->name . ' lost';
-                                        $amt = $trade->traded_amount + ($pl);
-                    $amt = ($pl);
-                     
+                    $amt = (float) $trade->traded_amount - (float) $pl;
                     $this->tradeAddBalance($user, $amt, $msg);
                     
                     $this->updateTradeProfit($trade,$coinPrice);
@@ -600,22 +594,18 @@ public function filterText(){
                     return 2;
                 }else{
                     if ($trade->opening_price < $trade->closing_price) {
-                                        $user->userInfo->balance += ($trade->traded_amount + $pl);
                     $msg = 'Traded  ' . optional($trade->currency)->name . ' won';
-                                        $amt = $trade->traded_amount + ($pl);
-                    $amt = ($pl);
+                    $amt = (float) $trade->traded_amount + (float) $pl;
                     $this->tradeAddBalance($user, $amt, $msg);
                    $this->updateTradeProfit($trade,$coinPrice);
-                    $user->save();
                     $trade->result = 1;
                     $trade->status = 1;
                     $trade->save();
                     return 1;
                 } else {
-                                            $user->userInfo->balance += $trade->traded_amount;
-                                            $user->save();
                     $msg = 'Traded  ' . optional($trade->currency)->name . ' draw';
-                                            $amt = $trade->traded_amount;
+                    $amt = (float) $trade->traded_amount;
+                    $this->tradeAddBalance($user, $amt, $msg);
                     $this->updateTradeProfit($trade,$coinPrice);
 
                     $trade->result = 3;
@@ -629,13 +619,9 @@ public function filterText(){
             if (strtolower($trade->trade_type) == 'sell') {
                 
                 if ($trade->opening_price < $trade->closing_price) {
-                    
-                                        $user->userInfo->balance += ($trade->traded_amount - $pl);
-                                        $user->save();
 
                     $msg = 'Traded  ' . optional($trade->currency)->name . ' lost';
-                                        $amt = $trade->traded_amount + ($pl);
-                    // $amt = ($pl);
+                    $amt = (float) $trade->traded_amount - (float) $pl;
                     $this->tradeAddBalance($user, $amt, $msg);
 $this->updateTradeProfit($trade,$coinPrice);
 $trade->result = 2;
@@ -643,12 +629,9 @@ $trade->result = 2;
                     $trade->save();
                     return 2;
                 } else if ($trade->opening_price > $trade->closing_price) {
-                    
-                                            $user->userInfo->balance += ($trade->traded_amount + $pl);
-                                            $user->save();
+
                     $msg = 'Traded  ' . optional($trade->currency)->name . ' won';
-                                            $amt = $trade->traded_amount + ($pl);
-                    $amt = ($pl);
+                    $amt = (float) $trade->traded_amount + (float) $pl;
                     $this->tradeAddBalance($user, $amt, $msg);
                    $this->updateTradeProfit($trade,$coinPrice);
                     $trade->result = 1;
@@ -656,10 +639,8 @@ $trade->result = 2;
                     $trade->save();
                     return 1;
                 } else{
-                     $user->userInfo->balance += ($trade->traded_amount + $pl);
-                      $user->save();
                     $msg = 'Traded  ' . optional($trade->currency)->name . ' Draw';
-                    $amt = $trade->traded_amount;
+                    $amt = (float) $trade->traded_amount;
                     $this->tradeAddBalance($user, $amt, $msg);
                    $this->updateTradeProfit($trade,$coinPrice);
                     $trade->result = 3;
@@ -669,13 +650,9 @@ $trade->result = 2;
                 }
                 
                 if(strtolower($trade->trade_type) != 'sell' && strtolower($trade->trade_type) != 'buy') {
-                   
-                                        $user->userInfo->balance += $trade->traded_amount;
-                                        $user->save();
 
                     $msg = 'Traded  ' . optional($trade->currency)->name . ' draw';
-                                        $amt = $trade->traded_amount;
-                    $amt = 0;
+                    $amt = (float) $trade->traded_amount;
                     $this->tradeAddBalance($user, $amt, $msg);
 $this->updateTradeProfit($trade,$coinPrice);
 $trade->result = 3;

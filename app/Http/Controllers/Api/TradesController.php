@@ -19,10 +19,10 @@ class TradesController extends Controller
             'amount' => 'required|numeric|gt:0',
             'coinId' => 'required',
             'type' => 'required',
-            'is_take_profit' => 'required',
-            'is_stop_loss' => 'required',
-            'stop_loss' => 'required',
-            'take_profit' => 'required',
+            // 'is_take_profit' => 'required',
+            // 'is_stop_loss' => 'required',
+            // 'stop_loss' => 'required',
+            // 'take_profit' => 'required',
             'duration' => 'required|numeric|gt:0',
         ]);
         $data = [];

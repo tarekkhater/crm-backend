@@ -2,9 +2,12 @@
 
 namespace App\Services;
 
+use App\Models\CurrencyPair;
 use App\Models\Position;
 use App\Models\User;
 use App\Models\InfoTradeUser;
+use Illuminate\Validation\ValidationException;
+use App\Services\Users\UserWalletService;
 use Carbon\Carbon;
 
 class TradeService
@@ -26,45 +29,83 @@ class TradeService
         return $trades;
     }
     
+    /**
+     * Parse booleans from JSON/API input. Request::boolean() mis-reads JSON true as false.
+     */
+    public function parseRequestBoolean(mixed $value): bool
+    {
+        if ($value === null) {
+            return false;
+        }
+
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        if (is_int($value) || is_float($value)) {
+            return (int) $value === 1;
+        }
+
+        if (is_string($value)) {
+            return filter_var($value, FILTER_VALIDATE_BOOLEAN);
+        }
+
+        return false;
+    }
+
+    public function resolveIsAiTradeForUser(User $user, bool $requested): bool
+    {
+        $aiEnabled = (int) ($user->ai_trading ?? 0) === 1;
+
+        if (!$aiEnabled) {
+            if ($requested) {
+                throw ValidationException::withMessages([
+                    'is_ai_trade' => ['AI trading is not enabled for this user.'],
+                ]);
+            }
+
+            return false;
+        }
+
+        return $requested;
+    }
+
+    public function resolveCurrencyPair(string $symbol): ?CurrencyPair
+    {
+        return CurrencyPair::query()
+            ->where('ex_sym', $symbol)
+            ->orWhere('sym', $symbol)
+            ->first();
+    }
+
+    public function normalizePnLThreshold(mixed $value): float
+    {
+        if ($value === null || $value === false || $value === '') {
+            return 0.0;
+        }
+
+        return max(0, (float) $value);
+    }
+
     public function createTrade(array $data)
     {
-            $direction = $data['direction'];
-            $opening_price = $data['opening_price'];
-            
-            $stop_loss_price = null;
-            $take_profit_price = null;
-           
-            // Stop Loss / Take Profit price calculation using actual price difference
-            if (!empty($data['stop_loss'])) {
-                $stop_loss_price = $direction === 'buy'
-                    ? $opening_price - $data['stop_loss']
-                    : $opening_price + $data['stop_loss'];
+            $currencyPair = $this->resolveCurrencyPair($data['symbol']);
+
+            if (!$currencyPair) {
+                throw ValidationException::withMessages([
+                    'symbol' => ['Invalid trading symbol.'],
+                ]);
             }
-            
-            if (!empty($data['take_profit'])) {
-                $take_profit_price = $direction === 'buy'
-                    ? $opening_price + $data['take_profit']
-                    : $opening_price - $data['take_profit'];
-            }
-            
-            // Pip value and PnL calculation using price difference (no pip_size)
-            $contract_size = 100000;
-            $lot = $data['lot'];
-            $leverage = $data['leverage'] ?? 1;
-            
-            $price_per_point = $lot * $contract_size / $opening_price; // Optional if needed
-            $profit = !empty($data['take_profit']) ? $data['take_profit'] * $data['amount'] : null;
-            $loss = !empty($data['stop_loss']) ? $data['stop_loss'] * $data['amount'] : null;
-            
-            // Margin calculation
-            $margin = $data['amount'] / $leverage;
-            $data['stop_loss_price'] = $stop_loss_price;
-            $data['take_profit_price'] = $take_profit_price;
-            // $data['trade_amount'] = $data['total'];
-            
-            $data['created_by'] = AuthApi()?'user':auth()->user()->email;
-            // Create trade
-           return Position::create($data);
+
+            $data['symbol'] = $currencyPair->ex_sym;
+            $data['stop_loss'] = $this->normalizePnLThreshold($data['stop_loss'] ?? null);
+            $data['take_profit'] = $this->normalizePnLThreshold($data['take_profit'] ?? null);
+            $data['stop_loss_price'] = null;
+            $data['take_profit_price'] = null;
+            $data['created_by'] = AuthApi() ? 'user' : auth()->user()->email;
+            $data['is_ai_trade'] = (bool) ($data['is_ai_trade'] ?? false);
+
+            return Position::create($data)->load('currency');
     }
     
     
@@ -92,28 +133,17 @@ class TradeService
     ];
 
     foreach ($editableFields as $field) {
-        if (isset($data[$field])) {
-            $trade->$field = $data[$field];
+        if (array_key_exists($field, $data)) {
+            if (in_array($field, ['stop_loss', 'take_profit'], true)) {
+                $trade->$field = $this->normalizePnLThreshold($data[$field]);
+            } else {
+                $trade->$field = $data[$field];
+            }
         }
     }
 
-    // Recalculate SL/TP prices based on updated values
-    $opening_price = $data["opening_price"];
-    $direction = strtolower($trade->direction);
-
-    if (!empty($trade->stop_loss)) {
-        $trade->stop_loss_price = $direction === 'buy'
-            ? $opening_price - $trade->stop_loss
-            : $opening_price + $trade->stop_loss;
-    }
-
-    if (!empty($trade->take_profit)) {
-        $trade->take_profit_price = $direction === 'buy'
-            ? $opening_price + $trade->take_profit
-            : $opening_price - $trade->take_profit;
-    }
-
-    // Optional: update margin
+    $trade->stop_loss_price = null;
+    $trade->take_profit_price = null;
     $trade->margin = round($trade->amount / $trade->leverage, 2);
     $trade->updated_by = auth()->user()->email;
     $trade->save();
@@ -132,8 +162,9 @@ public function closeTrade($tradeId,$profit=0,$addProfit=false)
         throw new \Exception("Trade already closed.");
     }
 
-    // Get current market price
-    $currentPrice = $trade->currency->rate;
+    // Get current market price (quoted exit — matches frontend display)
+    $midRate = (float) ($trade->currency->rate ?? 0);
+    $trade->closed_price = $trade->quotedExitPrice($midRate);
     // $spread = $trade->spread ?? 0;
 
     // // Calculate spread cost
@@ -175,9 +206,11 @@ public function closeTrade($tradeId,$profit=0,$addProfit=false)
     // Add net profit to user's balance
     $user = $trade->user;
     // if ($user && property_exists($user, 'balance')) {
-        $users = InfoTradeUser::where('user_id',$trade->user_id)->first();
-        $users->balance += (float)$profit;
-        $users->save();
+        $users = InfoTradeUser::where('user_id', $trade->user_id)->first();
+        if ($users) {
+            UserWalletService::applyMainWalletDelta($users, (float) $profit);
+            $users->save();
+        }
     // }
  // Save trade
     $trade->save();

@@ -13,6 +13,7 @@ use Schema;
 use App\Models\User;
 use App\Models\InfoTradeUser;
 use App\Models\Transaction;
+use App\Services\Users\UserWalletService;
 use App\Models\UserManager;
 
 class IndexController extends Controller
@@ -26,6 +27,7 @@ class IndexController extends Controller
     }
 
     public function user($id){
+        abort_unless(in_array((int)$id, array_map('intval', getUsersIds()->toArray())), 403);
         $deposites = Withdrawal::with(['user','user.TradingAccount','user.countries','plan'])->where('user_id',$id)->paginate(20);
         $this->setMessage("success");
         $this->setData($deposites);
@@ -56,11 +58,11 @@ class IndexController extends Controller
        
          if($request->status == 1){
             $user = InfoTradeUser::where('user_id',$withdrawals->user_id)->first();
-            if($user->balance >= $withdrawals->amount){
+            if($user && UserWalletService::canAfford($user, (float) $withdrawals->amount)
+                && UserWalletService::applyDebit($user, (float) $withdrawals->amount)){
                 $withdrawals->update([
                     'status'=>$request->status
                 ]);
-                $user->balance -= $withdrawals->amount;
                 $user->save();
             }else{
                 $this->setStatus(422);
@@ -182,7 +184,11 @@ class IndexController extends Controller
 
         if ($data['status'] == 'approved') {
             if ($wd->approved < 1) {
-                $user->userInfo->balance = $user->aBalance() - $wd->amount;
+                $user->load('userInfo');
+                if (!$user->userInfo || !UserWalletService::applyDebit($user->userInfo, (float) $wd->amount)) {
+                    return redirect()->back()->with('failure', 'Insufficient balance for withdrawal');
+                }
+                $user->userInfo->save();
             }
             $wd->approved = 1;
         }elseif ($data['status'] == 'declined') {
@@ -190,8 +196,6 @@ class IndexController extends Controller
         }
 
         $wd->save();
-
-       $user->save();
 
        Transaction::create(['user_id' => $data['user_id'], 'amount' => $data['amount'], 'type' => 'deposit', 'account_type' => 'balance','note' => 'deposit']);
 

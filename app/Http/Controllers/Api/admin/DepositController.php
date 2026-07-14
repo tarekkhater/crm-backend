@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\Deposit;
 use App\Models\Package;
 use App\Models\Transaction;
+use App\Services\Users\UserWalletService;
 
 class DepositController extends Controller
 {
@@ -19,8 +20,10 @@ class DepositController extends Controller
             $data = $request->all();
             $deposit = Deposit::findOrFail($depositId);
             $user = $deposit->user;
-            $user->userInfo->balance = $user->userInfo->balance + $data['amount'];
-            $user->save();
+            $user->load('userInfo');
+            UserWalletService::ensureSynced($user->userInfo);
+            UserWalletService::applyCreditToMain($user->userInfo, (float) $data['amount']);
+            $user->userInfo->save();
 
             Transaction::create(['user_id' => $user->id, 'amount' => $data['amount'], 'type' => 'deposit', 'account_type' => 'balance','note' => 'deposit']);
 

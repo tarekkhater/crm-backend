@@ -3,8 +3,9 @@
 namespace App\Http\Resources\CRM\APi\User;
 
 use Illuminate\Http\Resources\Json\JsonResource;
-use App\Models\Deposit;
 use App\Models\Trade;
+use App\Services\Users\UserWalletService;
+use App\Models\InfoTradeUser;
 use App\Models\TypeUser;
 use App\Models\Favourite;
 use App\Models\User;
@@ -45,6 +46,7 @@ class UserResource extends JsonResource
             'withdraw' => $value['can_withdraw'] == '1' ? true : false,
             'allow_trade' => $value['allow_trade'] == '1' ? true : false,
             'allow_trade_after_hours' => $value['allow_trade_after_hours'] == '1' ? true : false,
+            'ai_trading' => ($value['ai_trading'] ?? '0') == '1',
             'online' => $value['no_of_logins'] == '1' ? 1 : 0,
         ];
         $result['id'] = $value['id'];
@@ -96,12 +98,27 @@ class UserResource extends JsonResource
             'joined' => date('Y M d', strtotime($value['created_at']))
         ];
 
+        $ui = $value['user_info'] ?? [];
+        $wallets = UserWalletService::breakdown(new InfoTradeUser([
+            'balance' => $ui['balance'] ?? 0,
+            'real_deposit' => $ui['real_deposit'] ?? null,
+            'awaiting_deposit' => $ui['awaiting_deposit'] ?? 0,
+            'bonus' => $ui['bonus'] ?? 0,
+            'mup' => $ui['mup'] ?? ($ui['fake'] ?? 0),
+        ]));
+
         $result['money'] = [
-            'total' => $value['user_info']['money'] + $value['user_info']['balance'],
-            'balance' => $value['user_info']['money'],
-            'trading_balance' => $value['user_info']['balance'],
-            'pnl' => $value['user_info']['pnl'],
-            'bouns' => Deposit::where('user_id', $value['id'])->where('type', 'bonus')->sum('amount'),
+            'total' => $wallets['main_balance'],
+            'balance' => $wallets['main_balance'],
+            'trading_balance' => $wallets['main_balance'],
+            'pnl' => $value['user_info']['pnl'] ?? 0,
+            'bouns' => $wallets['bonus'],
+            'bonus' => $wallets['bonus'],
+            'mup' => $wallets['mup'],
+            'credit' => $wallets['credit'],
+            'real_deposit' => $wallets['real_deposit'],
+            'awaiting_deposit' => $wallets['credit'],
+            'wallets_total' => $wallets['total_all_wallets'],
         ];
         $result['trades'] = [
             'open' => Trade::where('user_id', $value['id'])->whereStatus(0)->Where('is_pending_order', null)->count(),
@@ -112,12 +129,22 @@ class UserResource extends JsonResource
 
         // $value['user_info']['bonus']
 
-        $result['wallet'] =  [
-            'awaiting' => $value['user_info']['awaiting_deposit'],
-            // 'trading' => ($value['user_info']['awaiting_deposit'] == $value['user_info']['balance'])
-            //     ? 0
-            //     : abs((float)$value['user_info']['balance'] - (float)$value['user_info']['awaiting_deposit']),
-            'trading'=>$value['user_info']['balance'],
+        $result['wallet'] = [
+            'credit' => $wallets['credit'],
+            'awaiting' => $wallets['credit'],
+            'real_deposit' => $wallets['real_deposit'],
+            'trading' => $wallets['main_balance'],
+            'bonus' => $wallets['bonus'],
+            'mup' => $wallets['mup'],
+            'total' => $wallets['main_balance'],
+            'total_all_wallets' => $wallets['total_all_wallets'],
+        ];
+
+        $result['wallet_types'] = [
+            ['value' => 'deposit', 'label' => 'Deposit'],
+            ['value' => 'credit', 'label' => 'Credit'],
+            ['value' => 'bonus', 'label' => 'Bonus'],
+            ['value' => 'mup', 'label' => 'MUP'],
         ];
         return $result;
     }

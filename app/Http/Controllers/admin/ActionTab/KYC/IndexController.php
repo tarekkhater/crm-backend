@@ -55,7 +55,8 @@ class IndexController extends Controller
 
     public function FilterText(Request $request){
         $data = [];
-        $users = User::query();
+        $visibleIds = getUsersIds();
+        $users = User::whereIn('id', $visibleIds);
         $columns = Schema::getColumnListing('users');
         
         foreach($columns as $column){
@@ -146,36 +147,57 @@ class IndexController extends Controller
 
     public function ChangeStatus(Request $request,$id){
         if($id > 0){
+            // $id may be a Document ID — resolve the Identity via the document's identity_id
+            $document = Document::find($id);
+            $identityId = $document ? $document->identity_id : $id;
+
          if($request->type == 1){
             Document::where('id',$request->id)->update([
                 'status'=>"$request->status",
                 'note'=>isset($request->note)?$request->note:null,
             ]);
-            $documens = Document::where('identity_id',$id)->where('status','1')->get();
+            $documens = Document::where('identity_id',$identityId)->where('status','1')->get();
             if(count($documens) > 3){
-               $users = Identity::find($id)->update([
+               $identity = Identity::find($identityId);
+               if(!$identity){
+                   $this->setStatus(404);
+                   $this->setMessage("Identity record not found");
+                   return $this->sendApiResonse();
+               }
+               $identity->update([
                     'status'=>"$request->status",
                     'modified_by'=>auth()->user()->id,
                 ]); 
             }
             }else{
-                $users = Identity::find($id)->update([
+                $identity = Identity::find($identityId);
+                if(!$identity){
+                    $this->setStatus(404);
+                    $this->setMessage("Identity record not found");
+                    return $this->sendApiResonse();
+                }
+                $identity->update([
                     'status'=>"$request->status",
                     'modified_by'=>auth()->user()->id,
                     'note'=>isset($request->note)?$request->note:null,
                 ]);
                 if(isset($request->name) && is_array($request->name)){
-                    // foreach($request->name as $index=>$value){
-                        Document::where('identity_id',$id)->whereIn('title',$request->name)->update([
-                            'status'=>"$request->status",
-                            'note'=>isset($request->note)?$request->note:null,
-                        ]);
-                        Document::where('identity_id',$id)->whereNotIn('title',$request->name)->update([
-                            'status'=>"1",
-                        ]);
-                    // }
-                }else{
-                    Document::where('identity_id',$id)->update([
+                    Document::where('identity_id',$identityId)->whereIn('title',$request->name)->update([
+                        'status'=>"$request->status",
+                        'note'=>isset($request->note)?$request->note:null,
+                    ]);
+                    Document::where('identity_id',$identityId)->whereNotIn('title',$request->name)->update([
+                        'status'=>"1",
+                    ]);
+                } elseif($document) {
+                    // A specific document ID was passed — update only that document
+                    $document->update([
+                        'status'=>"$request->status",
+                        'note'=>isset($request->note)?$request->note:null,
+                    ]);
+                } else {
+                    // Fallback: update all documents for this identity
+                    Document::where('identity_id',$identityId)->update([
                         'status'=>"$request->status",
                     ]);
                 }

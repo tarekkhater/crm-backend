@@ -10,42 +10,14 @@ class PositionResource extends JsonResource
     {
  
         $profit = $this->net_profit;
-       if($this->close_at == null){
-            if($this->direction === 'buy'){
-                    $priceDiff = (float)($this->currency->rate??0) - $this->opening_price;
-                    // الربح الخام
-                    $rawProfit = $priceDiff * $this->lot * $this->amount;
-                    
-                    // تكلفة السبريد (لو في ربح موجب فقط)
-                    $spreadCost = $priceDiff > 0 ? ($this->spread / 100) * $this->lot * $this->amount : 0;
-                    
-                    // صافي الربح
-                    $profit = $rawProfit - $spreadCost + $this->com;
-                    
-                    
-                    $this->profit = $profit;
-                    $this->net_profit = $profit;
-                    $this->save();
-            }else{
-                    $priceDiff = $this->opening_price - (float)$this->currency->rate;
-                    
-                    
-                    // الربح الخام
-                    $rawProfit = $priceDiff * $this->lot * $this->amount;
-                    
-                    // تكلفة السبريد (لو في ربح موجب فقط)
-                    $spreadCost = $priceDiff > 0 ? ($this->spread / 100) * $this->lot * $this->amount : 0;
-                    
-                    // صافي الربح
-                    $profit = $rawProfit - $spreadCost + $this->com;
-                    
-                    // تنسيق الرقم لو محتاج (اختياري)
-                    $profit =$profit;
-                    $this->profit = $profit;
-                    $this->net_profit = $profit;
-                    $this->save();
-            }
-       }
+        $midRate = (float) ($this->currency->rate ?? 0);
+        $displayPrice = $midRate;
+
+        if ($this->close_at == null && $midRate > 0) {
+            // Display-only — never save here (save triggers SL/TP on all open trades via saved event)
+            $profit = $this->calculateFloatingProfit($midRate);
+            $displayPrice = $this->quotedExitPrice($midRate);
+        }
        
        
     
@@ -62,8 +34,7 @@ class PositionResource extends JsonResource
             'com'             => $this->com,
             'leverage'           => $this->leverage,
             'margin'             => $this->margin,
-            'margin'             => $this->spread,
-            'spread_cost'        => round(($this->spread * 0.0001 * $this->amount), 2), // لحساب تكلفة السبريد
+            'spread_cost'        => round(($this->spread / 100) * ($this->lot ?? 1) * $this->amount, 4),
             'stop_loss'          => $this->stop_loss,
             'take_profit'        => $this->take_profit,
             'stop_loss_price'    => $this->stop_loss_price,
@@ -73,9 +44,11 @@ class PositionResource extends JsonResource
             'live_loss'          => $this->live_loss,
             'loss'               => $this->loss,
             'trade_amount'       => $this->trade_amount,
-            'current_price'      => round($this->currency->rate??0,4),
+            'closed_price'       => $this->closed_price ? round($this->closed_price, 8) : null,
+            'current_price'      => round($displayPrice, 4),
             'closed_by'      => $this->closed_by =='user'?$this->user->email:$this->closed_by,
             'created_by'      => $this->created_by =='user'?$this->user->email:$this->created_by,
+            'is_ai_trade'     => (bool) $this->is_ai_trade,
             'updated_by'      => $this->updated_by,
             'currency'           => [
                 'image' => $this->currency->image ?? null,

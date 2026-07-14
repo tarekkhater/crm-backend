@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Models\Position;
 use App\Models\User;
+use App\Services\Users\UserWalletService;
 use Carbon\Carbon;
 use DB;
 
@@ -30,7 +31,7 @@ class ForceClosePositions extends Command
         foreach ($users as $user) {
             $openPositions = Position::where('user_id', $user->id)->whereNull('close_at')->get();
             $totalProfit = $openPositions->sum('net_profit');
-            $balance = $user->userInfo->balance;
+            $balance = UserWalletService::mainBalance($user->userInfo);
             
             // $pnl = Position::where('close_at',null)->whereUserId($user->id)->sum('net_profit');
             // $profit = $pnl;
@@ -55,7 +56,7 @@ class ForceClosePositions extends Command
                     $position->close_at = Carbon::now();
                     $position->save();
                 }
-                $user->userInfo->balance = 0;
+                UserWalletService::resetMainWallets($user->userInfo);
                 $user->userInfo->save();
                 $closedUsers[] = $user->id;
                 \Log::info("Closed positions for user #{$user->id} due to PnL = balance.");

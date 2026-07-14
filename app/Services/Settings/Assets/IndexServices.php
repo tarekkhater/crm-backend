@@ -4,16 +4,15 @@ use App\Models\CurrencyPair;
 use Illuminate\Http\Request;
 class IndexServices{
     public function all(Request $request){
-        $Currencys = CurrencyPair::paginate(15);
+        $query = CurrencyPair::query()->orderedForDisplay();
         if(isset($request->search) && $request->search != ''){
-            $Currencys = CurrencyPair::where('name','LIKE','%'.$request->search.'%')->paginate(15);
+            $query->where('name','LIKE','%'.$request->search.'%');
         }
-        return $Currencys;
+        return $query->paginate(15);
     }
     
     public function allindex(){
-        $Currencys = CurrencyPair::get();
-        return $Currencys;
+        return CurrencyPair::orderedForDisplay()->get();
     }
     
 
@@ -32,8 +31,26 @@ class IndexServices{
     }
     
     public function getbytype($type){
-         $Currencys = CurrencyPair::wheretype($type)->get();
-        return $Currencys;
+        return CurrencyPair::where('type', $type)->orderedForDisplay()->get();
+    }
+
+    public function updateOrder(string $type, array $orderedIds): void
+    {
+        $uniqueIds = array_values(array_unique($orderedIds));
+        $assets = CurrencyPair::where('type', $type)
+            ->whereIn('id', $uniqueIds)
+            ->get()
+            ->keyBy('id');
+
+        if ($assets->count() !== count($uniqueIds)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'order' => ['One or more assets do not belong to the selected type.'],
+            ]);
+        }
+
+        foreach ($uniqueIds as $index => $id) {
+            CurrencyPair::where('id', $id)->update(['sort_order' => $index + 1]);
+        }
     }
 
     public function show($id){
@@ -80,6 +97,8 @@ class IndexServices{
             $data['close_at'] = $close_at;
             $data['days'] = json_encode($defaultDays);
         }
+        $maxOrder = CurrencyPair::where('type', $request->type)->max('sort_order') ?? 0;
+        $data['sort_order'] = $maxOrder + 1;
         $Currencys = CurrencyPair::create($data);
          if(isset($request->image)){
             $Currencys->image = $this->uploadRealImage($request->image, 'Assets');

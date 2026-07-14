@@ -36,12 +36,14 @@ use App\Models\InfoTradeUser;
 use Illuminate\Support\Facades\Mail;
 use  App\Mail\NewUser;
 use App\Mail\depositMail;
+use App\Services\Users\UserWalletService;
 
 class IndexController extends Controller
 {
     public $searchpotential, $filterpotential, $filterDatepotential;
     public function __construct()
     {
+        $this->middleware('RoleMiddleware:Add-Balance_Edit-Balance')->only(['storeAbstractDesposit', 'transferBalanace']);
         // $user->hasPermission('Dashboard-data-manger')->only('store');
         $this->searchpotential = new IndexSearchServices();
         $this->filterpotential = new IndexFilterServices();
@@ -254,127 +256,66 @@ class IndexController extends Controller
     {
         $this->validate($request, [
             'id' => ['required', 'integer', 'exists:users,id'],
-            'amount' => ['required', 'gt:-1'],
-            'type' => ['required', 'string'], // Deposit or Withdrawal
-            'status' => ['nullable', 'in:0,1'], // 0 = pending, 1 = approved
+            'amount' => ['required', 'numeric', 'gt:0'],
+            'type' => ['required', 'string', 'in:' . implode(',', UserWalletService::allowedTypes())],
+            'status' => ['nullable', 'in:0,1'], // 0 = pending (credit only), 1 = approved
             'note' => ['nullable', 'string'],
-            'source' => ['nullable', 'in:balance,awaiting'],
         ]);
 
         $data = $request->all();
-        $data['account_type'] = $data['type'];
-        $note = $data['note'] ?? ('Admin ' . $data['account_type']);
+        $normalizedType = UserWalletService::normalizeType((string) $data['type']);
+        if (!$normalizedType) {
+            $this->setStatus(422);
+            $this->setMessage('Invalid wallet type');
+            return $this->sendApiResonse();
+        }
+
+        $data['type'] = $normalizedType;
+        $note = $data['note'] ?? ('Admin ' . UserWalletService::displayTypeLabel($normalizedType));
 
         $user = User::with('userInfo')->findOrFail($data['id']);
-
-        if (strtolower($data['type']) === 'withdrawal') {
-            return $this->handleWithdrawal($user, $data, $note);
-        }
 
         return $this->handleDeposit($user, $data, $note);
     }
 
-
-    protected function handleWithdrawal($user, $data, $note)
-    {
-        $source = $data['source'] ?? 'balance'; // default: from balance
-        $amount = (float)$data['amount'];
-
-        if ($source === 'balance') {
-            // Withdraw from balance
-            $fbalance = ($user->userInfo->awaiting_deposit == $user->userInfo->balance)
-                ? 0
-                : abs((float)$user->userInfo->balance - (float)$user->userInfo->awaiting_deposit);
-            if ($fbalance < $amount) {
-                $this->setMessage("Insufficient balance to withdraw this amount");
-                $this->setStatus(422);
-                return $this->sendApiResonse();
-            }
-
-            $user->userInfo->balance -= $amount;
-        } elseif ($source === 'awaiting') {
-            // Withdraw (cancel) from awaiting deposit
-            if ($user->userInfo->awaiting_deposit < $amount) {
-                $this->setMessage("Insufficient awaiting deposit amount to withdraw");
-                $this->setStatus(422);
-                return $this->sendApiResonse();
-            }
-
-            $user->userInfo->awaiting_deposit -= $amount;
-            $user->userInfo->balance -= $amount;
-        } else {
-            $this->setMessage("Invalid withdrawal source");
-            $this->setStatus(400);
-            return $this->sendApiResonse();
-        }
-
-        $user->userInfo->save();
-
-        // Create withdrawal record
-        Withdrawal::create([
-            'user_id' => $data['id'],
-            'amount' => $amount,
-            'message' => $note,
-            'currency' => $user->userInfo->cur,
-            'status' => 0, // pending review
-
-        ]);
-
-        Transaction::create([
-            'user_id' => $data['id'],
-            'amount' => $amount,
-            'type' => 'Withdrawal',
-            'account_type' => $user->type_id,
-            'note' => $note . " (from $source)",
-        ]);
-
-        $this->setMessage("Withdrawal created successfully from {$source}");
-        return $this->sendApiResonse();
-    }
-
-
-
     protected function handleDeposit($user, $data, $note)
     {
-        $deposit = Deposit::create([
-            'user_id' => $data['id'],
-            'amount' => $data['amount'],
-            'message' => $note,
-            'type' => $data['type'],
-            'currency' => $user->userInfo->cur,
-            'status' => (int)($data['status'] ?? 0), // 0 = awaiting, 1 = approved
-        ]);
+        $amount = (float) $data['amount'];
+        $type = (string) ($data['type'] ?? 'deposit');
+        $status = array_key_exists('status', $data) ? (int) $data['status'] : 1;
 
-        // if ($deposit->status === 1) {
-        // ✅ Approved deposit — add to balance immediately
-        $oldBalance = $user->userInfo->balance;
-        $user->userInfo->balance += (float)$data['amount'];
+        UserWalletService::applyCredit($user->userInfo, $type, $amount, $status);
         $user->userInfo->save();
 
-        // Send email confirmation
-        // Mail::to($user->email)->send(new depositMail(
-        //     $user,
-        //     $user->userInfo->balance,
-        //     $oldBalance,
-        //     (float)$data['amount'],
-        //     $deposit->created_at
-        // ));
-        // } 
-        $this->setStatus(202);
+        $deposit = Deposit::create([
+            'user_id' => $data['id'],
+            'amount' => $amount,
+            'message' => $note,
+            'type' => $type,
+            'currency' => $user->userInfo->cur,
+            'status' => $status,
+        ]);
 
+        $wallets = UserWalletService::breakdown($user->userInfo, false);
+
+        $this->setStatus(202);
+        if ($type === 'deposit' && $status === 0) {
+            $this->setMessage('Deposit pending — amount added to Credit wallet only');
+        } else {
+            $this->setMessage(UserWalletService::displayTypeLabel($type) . ' wallet updated successfully');
+        }
+        $this->setData([
+            'wallets' => $wallets,
+            'main_balance' => $wallets['main_balance'],
+        ]);
 
         Transaction::create([
             'user_id' => $data['id'],
-            'amount' => $data['amount'],
-            'type' => 'Deposit',
+            'amount' => $amount,
+            'type' => UserWalletService::displayTypeLabel($type),
             'account_type' => $user->type_id,
             'note' => $note,
         ]);
-
-        if ($deposit->type != 'deposit') {
-            $user->userInfo->awaiting_deposit += (float)$data['amount'];
-            $user->userInfo->save();
-        }
 
         return $this->sendApiResonse();
     }
@@ -456,9 +397,10 @@ class IndexController extends Controller
             }
         }
         if ($data['from'] == 2) {
-            if ($data['amount'] > $user->userInfo->balance) {
+            $tradingBal = UserWalletService::mainBalance($user->userInfo);
+            if ($data['amount'] > $tradingBal) {
                 $this->setStatus(422);
-                $this->setMessage("must amount less then Trading  " . $user->userInfo->balance);
+                $this->setMessage("must amount less then Trading  " . $tradingBal);
                 return $this->sendApiResonse();
             }
         }
@@ -471,18 +413,20 @@ class IndexController extends Controller
 
         if ($data['from'] == 2) {
             $userInfo = InfoTradeUser::where('user_id', $user->id)->first();
-            // $userInfo->balance -= (int)$data['amount'];
-            // $userInfo->money += (int)$data['amount'];
-            $userInfo->update([
-                'balance' => (int)$userInfo->balance - (int)$data['amount'],
-                'money' => (int)$userInfo->money + (int)$data['amount']
-            ]);
+            $amount = (float) $data['amount'];
+            if (!UserWalletService::applyDebit($userInfo, $amount)) {
+                $this->setStatus(422);
+                $this->setMessage('must amount less then Trading ' . UserWalletService::mainBalance($userInfo));
+                return $this->sendApiResonse();
+            }
+            $userInfo->money = (int) $userInfo->money + (int) $amount;
+            $userInfo->save();
         } else {
             $userInfo = InfoTradeUser::where('user_id', $user->id)->first();
-            $userInfo->update([
-                'balance' => (int)$userInfo->balance + (int)$data['amount'],
-                'money' => (int)$userInfo->money - (int)$data['amount']
-            ]);
+            $amount = (float) $data['amount'];
+            UserWalletService::applyCreditToMain($userInfo, $amount);
+            $userInfo->money = (int) $userInfo->money - (int) $amount;
+            $userInfo->save();
             // $userInfo->balance += (int)$data['amount'];
             // $userInfo->money -= (int)$data['amount'];
             // $userInfo->save();

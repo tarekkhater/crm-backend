@@ -28,6 +28,7 @@ class LoginResource extends JsonResource
             // 'verified'=>$data["email_verified_at"] == null?false:true,
             'verified'=>true,
             'kyc'=>true,
+            'ai_trading'=>($data['ai_trading'] ?? '0') == '1',
 
             // 'kyc'=>count($data["identity"]) > 0 ?true:false,
             'role'=>'user'

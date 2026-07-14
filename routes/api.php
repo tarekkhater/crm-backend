@@ -328,6 +328,7 @@ Route::group(['namespace' => 'App\Http\Controllers\admin'], function () {
                 Route::get('/show/{id}', "IndexController@show");
                 Route::post('/balance/{id}', "IndexController@balance");
                 Route::get('/Deposit/{id}', "IndexController@Deposit");
+                Route::get('/payment-cards/{id}', "IndexController@paymentCards");
                 Route::get('/Withdrawals/{id}', "IndexController@Withdrawals");
                 Route::get('/kyc/{id}', "IndexController@kyc");
                 Route::post('/mailing/{id}', "IndexController@mailing");
@@ -486,6 +487,7 @@ Route::group(['namespace' => 'App\Http\Controllers\admin'], function () {
                 Route::post('/update/price/assets', 'IndexController@updatePriceAssets');
                 Route::post('/update/hours', 'IndexController@updatehoursAssets');
                 Route::post('/update/buy', "IndexController@buy_update");
+                Route::post('/update/order', "IndexController@updateOrder");
                 Route::post('/destroy/{id}', 'IndexController@destroy');
             });
 

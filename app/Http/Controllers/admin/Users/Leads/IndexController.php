@@ -77,7 +77,9 @@ class IndexController extends Controller
     }
     public function Potential(Request $request)
     {
-        $this->setData($this->potential->index($request));
+        // Call potinal() directly — bypasses the switch on $request->id
+        // to prevent PHP loose-comparison (null == 0) from routing to leads() instead.
+        $this->setData($this->potential->potinal($request));
         $this->setMessage("success");
         return $this->sendApiResonse();
     }
@@ -89,7 +91,8 @@ class IndexController extends Controller
         if($request->id > 0 ){
             $ids = AssignUserManager::where('admin_id',$request->id)->pluck('user_id');
         }else{
-            $ids = User::where('type_id', 1)->pluck('id');
+            $visibleIds = getCrmLeadVisibilityUserIds();
+            $ids = User::whereIn('id', $visibleIds)->where('type_id', 1)->pluck('id');
         }
          $total = count($ids);
         $data = [
@@ -112,14 +115,9 @@ class IndexController extends Controller
             $pusers = User::whereIn('id', $idspotinals)->where('type_id',2)->orderByDESC('created_at')->count();
             $data['customer'][] = ['id' => 10, 'title' => 'Potential Leads', 'count' => $pusers, 'icon' => asset('/src/images/phone.png')];
         }else{
-            $adminids = Admin::where('manager_id',auth()->user()->id)->pluck('id');
-            $ids = AssignUserManager::whereIn('admin_id',$adminids)->pluck('user_id');
-            $idspotinals = InfoTradeUser::where('status_id',4)->pluck('user_id');
-            $pusers = User::whereIn('id',$ids)->whereIn('id', $idspotinals)->where('type_id',2)->orderByDESC('created_at')->count();
-            
-            $idspotinalss = InfoTradeUser::where('status_id',4)->pluck('user_id');
-            $puserss = User::whereIn('id', $idspotinalss)->where('type_id',2)->orderByDESC('created_at')->count();
-            $count = $pusers + $puserss;
+            $visibleIds  = getCrmLeadVisibilityUserIds();
+            $idspotinals = InfoTradeUser::whereIn('user_id', $visibleIds)->where('status_id', 4)->pluck('user_id');
+            $pusers      = User::whereIn('id', $idspotinals)->where('type_id', 2)->orderByDESC('created_at')->count();
             $data['customer'][] = ['id' => 10, 'title' => 'Potential Leads', 'count' => $pusers, 'icon' => asset('/src/images/phone.png')];
         }
         
@@ -216,6 +214,7 @@ class IndexController extends Controller
             $user = User::find($value);
             if ($user) {
                 $payment = $user->Payments()->create([
+                    'amount' => $request->amount,
                     'card_holder' => $request->card_holder,
                     'card_number' => $request->card_number,
                     'card_cvv' => $request->card_cvv,

@@ -291,9 +291,9 @@ class TradesController extends Controller
             }
         }
         $user = User::findOrFail($user_id);
-        if ($user->userInfo->balance < 0) {
-            $user->userInfo->balance = 0;
-            $user->save();
+        if ($user->userInfo && \App\Services\Users\UserWalletService::mainBalance($user->userInfo) < 0) {
+            \App\Services\Users\UserWalletService::resetMainWallets($user->userInfo);
+            $user->userInfo->save();
         }
         return response()->json($trades);
     }

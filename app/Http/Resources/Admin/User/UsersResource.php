@@ -4,6 +4,8 @@ namespace App\Http\Resources\Admin\User;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use App\Services\Users\UserWalletService;
+use App\Models\InfoTradeUser;
 class UsersResource extends JsonResource
 {
     /**
@@ -19,6 +21,14 @@ class UsersResource extends JsonResource
         $data = [];
         foreach ($users as $user) {
             $codep = $user['countries']['phonecode']??'-';
+            $ui = $user['userInfo'] ?? [];
+            $wallets = UserWalletService::breakdown(new InfoTradeUser([
+                'balance' => $ui['balance'] ?? 0,
+                'real_deposit' => $ui['real_deposit'] ?? null,
+                'awaiting_deposit' => $ui['awaiting_deposit'] ?? 0,
+                'bonus' => $ui['bonus'] ?? 0,
+                'mup' => $ui['mup'] ?? ($ui['fake'] ?? 0),
+            ]));
             $data[] = [
                 'id' => $user['id'],
                 'name' => $user['name'].' '.$user['surname'],
@@ -31,6 +41,7 @@ class UsersResource extends JsonResource
                 'withdraw'=>$user['can_withdraw'] == '1'?true:false,
                 'allow_trade'=>$user['allow_trade'] == '1'?true:false,
                 'allow_trade_after_hours'=>$user['allow_trade_after_hours'] == '1'?true:false,
+                'ai_trading'=>($user['ai_trading'] ?? '0') == '1',
                 'online'=>$user['no_of_logins']== '1'?1:0,
                 'last_comment'=>$user['last_agent_note_date'],
                 'last_comment_content'=>$user['last_agent_note_content'],
@@ -45,12 +56,14 @@ class UsersResource extends JsonResource
                 'country' => $user['countries']['name']??'-',
                 'created_at' => $user['created_at'],
                 'user_info'=>[
-                    "balance"=> (($user['userInfo']['money']??0) + ($user['userInfo']['balance']??0))."$",
+                    "balance"=> $wallets['main_balance'] . '$',
+                    "main_balance"=> $wallets['main_balance'],
                     "plan_id"=> $user['userInfo']['plan_id']??0,
                     "branch_id"=> $user['userInfo']['branch_id']??0,
                     "status_id"=> $user['userInfo']['status_id']??0,
                     "source_id"=> $user['userInfo']['source_id']??0,
                     'campaign_id'=>$user['userInfo']['campaign_id']??0,
+                    'wallets' => $wallets,
                 ],
                 'manager' => $user['Manager']?? null,    
                 'category' => $this->HandleType($user['Manager']['manager'] ?? null),    

@@ -1,4 +1,4 @@
-
+﻿
         @extends('EmailsNew.layouts.app')
         @section('main-content') 
         <table width="100%" cellpadding="0" cellspacing="0" dir="ltr">
@@ -9,9 +9,9 @@
       text-align: left;
     width: 90%;
     margin-top: 15px;
-    background-color: #0BC691;
+    background-color: {{ config('email-branding.colors.accent') }};
     padding: 10px;
-    border: 1px solid #0BC691;
+    border: 1px solid {{ config('email-branding.colors.accent') }};
     border-radius: 5px;
       ">
         <div style="color:white;font-size: 18px;font-weight: 400;line-height: 21.78px;">
@@ -22,10 +22,10 @@
       <main style="text-align : start; padding-left : 20px; padding-right : 20px;">
         <div class="my-8 grid grid-cols-1 gap-6" style="text-align:left">
           <p style="color:#000;">
-            Hi <b style="color:#0BC691;font-weight : 700;font-size: 18px;line-height: 21.78px;font-family: system-ui;">{{$data['user']->name}} {{$data['user']->surname}}.</b>
+            Hi <b style="color:{{ config('email-branding.colors.accent') }};font-weight : 700;font-size: 18px;line-height: 21.78px;font-family: system-ui;">{{$data['user']->name}} {{$data['user']->surname}}.</b>
           </p>
           <p style="margin-top : 10px;color:#000;" class="text-[#242052CC]">
-           We received a request to reset your password for your quantumprime account. Please use the following code to reset your password:
+           We received a request to reset your password for your Paradox Investing account. Please use the following code to reset your password:
              </main>
       </section>
             </td>
@@ -35,7 +35,7 @@
                 <tr>
                 <td>
             
-                <p style="font-weight : 700;font-size: 37px;line-height: 21.78px;text-align:center;color:#0BC691;    border: 3px solid #0bc691;
+                <p style="font-weight : 700;font-size: 37px;line-height: 21.78px;text-align:center;color:{{ config('email-branding.colors.accent') }};    border: 3px solid {{ config('email-branding.colors.accent') }};
     padding: 10px;
     border-radius: 5px;margin-right:3px;
 ">
@@ -43,7 +43,7 @@
                 </p>
                 </td>
                 <td>
-                <p style="font-weight : 700;font-size: 37px;line-height: 21.78px;text-align:center;color:#0BC691;    border: 3px solid #0bc691;
+                <p style="font-weight : 700;font-size: 37px;line-height: 21.78px;text-align:center;color:{{ config('email-branding.colors.accent') }};    border: 3px solid {{ config('email-branding.colors.accent') }};
     padding: 10px;
     border-radius: 5px;margin-right:3px;
 ">
@@ -51,7 +51,7 @@
                 </p>
                 </td>
                 <td>
-                <p style="font-weight : 700;font-size: 37px;line-height: 21.78px;text-align:center;color:#0BC691;    border: 3px solid #0bc691;
+                <p style="font-weight : 700;font-size: 37px;line-height: 21.78px;text-align:center;color:{{ config('email-branding.colors.accent') }};    border: 3px solid {{ config('email-branding.colors.accent') }};
     padding: 10px;
     border-radius: 5px;margin-right:3px;
 ">
@@ -59,7 +59,7 @@
                 </p>
                 </td>
                 <td>
-                 <p style="font-weight : 700;font-size: 37px;line-height: 21.78px;text-align:center;color:#0BC691;    border: 3px solid #0bc691;
+                 <p style="font-weight : 700;font-size: 37px;line-height: 21.78px;text-align:center;color:{{ config('email-branding.colors.accent') }};    border: 3px solid {{ config('email-branding.colors.accent') }};
     padding: 10px;
     border-radius: 5px;margin-right:3px;
 ">
@@ -67,7 +67,7 @@
                 </p>
                 </td>
                 <td>
-                 <p style="font-weight : 700;font-size: 37px;line-height: 21.78px;text-align:center;color:#0BC691;    border: 3px solid #0bc691;
+                 <p style="font-weight : 700;font-size: 37px;line-height: 21.78px;text-align:center;color:{{ config('email-branding.colors.accent') }};    border: 3px solid {{ config('email-branding.colors.accent') }};
     padding: 10px;
     border-radius: 5px;margin-right:3px;
 ">
@@ -75,7 +75,7 @@
                 </p>
                 </td>
                 <td>
-                 <p style="font-weight : 700;font-size: 37px;line-height: 21.78px;text-align:center;color:#0BC691;    border: 3px solid #0bc691;
+                 <p style="font-weight : 700;font-size: 37px;line-height: 21.78px;text-align:center;color:{{ config('email-branding.colors.accent') }};    border: 3px solid {{ config('email-branding.colors.accent') }};
     padding: 10px;
     border-radius: 5px;
 ">
@@ -100,7 +100,7 @@
                 <!--          <img src="{{asset('Emails/lock.png')}}" style="margin-right:4px;width: 60%;height: 60%;"  alt="illustration-1" />-->
                 <!--      </td>-->
                 <!--      <td style="align-content:center!important;color:#000;text-align:left">-->
-                <!--          <p><b style="font-family: system-ui;color:#0BC691;">Reset Password </b>Go to the Password Reset Page.</p>-->
+                <!--          <p><b style="font-family: system-ui;color:{{ config('email-branding.colors.accent') }};">Reset Password </b>Go to the Password Reset Page.</p>-->
                 <!--      </td>-->
                 <!--</tr>-->
                 <tr>
@@ -111,7 +111,7 @@
                     left: 8%;
                     bottom: 41%;
                     font-size: 17px;">
-                      <p><b style="font-family: system-ui;color:#0BC691;">Enter the Code </b>Enter the code provided above.</p>
+                      <p><b style="font-family: system-ui;color:{{ config('email-branding.colors.accent') }};">Enter the Code </b>Enter the code provided above.</p>
                   </td>
                 </tr>
                 
@@ -123,7 +123,7 @@
                     left: 8%;
                     bottom: 41%;
                     font-size: 17px;">
-                      <p><b style="font-family: system-ui;color:#0BC691;">Create a New Password</b> Follow the instructions to set a new password.</p>
+                      <p><b style="font-family: system-ui;color:{{ config('email-branding.colors.accent') }};">Create a New Password</b> Follow the instructions to set a new password.</p>
                   </td>
                 </tr>
             </table>

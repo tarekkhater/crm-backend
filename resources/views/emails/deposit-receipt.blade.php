@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -44,13 +44,13 @@
       >
         <div style="padding: 50px">
           <div>
-            <img style="width: 140px" src="images/logo.png" alt="logo" />
+            <img style="width: 140px" src="{{ \App\Helpers\EmailBranding::logoUrl() }}" alt="logo" />
           </div>
 
           <div>
             <h3
               style="
-                background-color: #f0e9ff;
+                background-color: {{ config('email-branding.colors.highlight_bg') }};
                 padding: 10px 20px;
                 font-size: 18px;
                 border-radius: 6px;
@@ -133,7 +133,7 @@
                   display: inline-block;
                   width: 150px;
                   text-align: center;
-                  background-color: #0070e4;
+                  background-color: {{ config('email-branding.colors.primary') }};
                   color: white;
                   padding: 12px 0;
                   font-size: 12px;
@@ -210,10 +210,10 @@
           </div>
         </div>
         <div
-          style="background-color: #007aff; padding: 20px 30px; color: white"
+          style="background-color: {{ config('email-branding.colors.primary') }}; padding: 20px 30px; color: white"
         >
           <div>
-            <img style="width: 140px" src="images/logo.png" alt="logo" />
+            <img style="width: 140px" src="{{ \App\Helpers\EmailBranding::logoUrl() }}" alt="logo" />
           </div>
           <p
             style="
@@ -225,7 +225,7 @@
               margin: 0 auto 10px;
             "
           >
-            You are receiving this mail because you registered to join the CIRCO
+            You are receiving this mail because you registered to join the Paradox Investing
             platform as a user or a creator. This also shows that you agree to
             our Terms of use and Privacy Policies. If you no longer want to
             receive mails from use, click the unsubscribe link below to

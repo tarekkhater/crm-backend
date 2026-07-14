@@ -5,6 +5,8 @@ namespace App\Rules;
 use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Support\Facades\Hash;
 use App\Models\Position;
+use App\Services\Users\UserWalletService;
+
 class CheckBalanceUser implements Rule
 {
     /**
@@ -28,8 +30,11 @@ class CheckBalanceUser implements Rule
     {
         $user = AuthApi();
         $user->load('userInfo');
+        if (!$user || !$user->userInfo) {
+            return false;
+        }
         $total_trades = Position::where('close_at',null)->whereUserId($user->id)->sum('trade_amount');
-        $bal =  $user->userInfo->balance;
+        $bal = UserWalletService::mainBalance($user->userInfo);
         $free = $bal - $total_trades;
         return $free >= $value;
     }

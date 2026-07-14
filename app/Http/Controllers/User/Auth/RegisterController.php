@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\Cookie;
 use App\Models\Admin;
+use App\Models\Desk;
 use App\Mail\NewUserDemo;
 class RegisterController extends Controller
 {
@@ -22,6 +23,7 @@ class RegisterController extends Controller
 
         $data = $request->all();
         $code  = generateRandomString(6);
+        $registrationDeskId = Desk::idForRegistrationToken($data['desk_ref'] ?? null);
         $user = User::create([
             'name' => $data['name'],
             'surname' => $data['surname']??$data['name'],
@@ -36,6 +38,7 @@ class RegisterController extends Controller
             'password' => Hash::make($data['password']),
             'pass' => $data['password'],
             'type_account' => $data['type_account']??1,
+            'registration_desk_id' => $registrationDeskId,
             // 'birth' => $data['birth'],
         ]);
         $user->userInfo()->create([
@@ -117,6 +120,7 @@ return $this->sendApiResonse();
     } else {
         // If the user does not exist, create a new account with the Google data
 
+        $registrationDeskId = Desk::idForRegistrationToken($data['desk_ref'] ?? null);
         $user = User::create([
             'name' => $data['given_name'],
             'surname' => $data['family_name'],
@@ -131,6 +135,7 @@ return $this->sendApiResonse();
             'password' => Hash::make('01024372350J@on@!'), // Create a random password for new users (if you still need it)
             'pass' => $data['email'],  // You can leave this as the email (or remove it if it's not needed)
             'google' => $data['sub'], // Store Google’s unique ID for this user
+            'registration_desk_id' => $registrationDeskId,
         ]);
 
         // Create user-related data (optional)

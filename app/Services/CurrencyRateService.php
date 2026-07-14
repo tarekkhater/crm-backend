@@ -25,21 +25,19 @@ class CurrencyRateService
             $rates = array_merge($rates, $this->getBulkCryptoRates($groupedCurrencies['crypto']));
         }
 
-        if (isset($groupedCurrencies['forex'])) {
-            $rates = array_merge($rates, $this->getBulkForexRates($groupedCurrencies['forex']));
-        }
-
         if (isset($groupedCurrencies['stocks'])) {
             $rates = array_merge($rates, $this->getBulkStocksRates($groupedCurrencies['stocks']));
         }
 
-        // استخدام Oanda bulk للـ indices والـ commodities
-        if (isset($groupedCurrencies['indices'])) {
-            $rates = array_merge($rates, $this->getBulkIndicesRates($groupedCurrencies['indices']));
+        // Forex + indices + commodities in one Oanda call (live bid/ask mid, not stale closeoutAsk)
+        $oandaGroups = [];
+        foreach (['forex', 'indices', 'commodities'] as $oandaType) {
+            if (isset($groupedCurrencies[$oandaType])) {
+                $oandaGroups[$oandaType] = $groupedCurrencies[$oandaType];
+            }
         }
-
-        if (isset($groupedCurrencies['commodities'])) {
-            $rates = array_merge($rates, $this->getBulkCommoditiesRates($groupedCurrencies['commodities']));
+        if (!empty($oandaGroups)) {
+            $rates = array_merge($rates, $this->getBulkOandaRates($oandaGroups));
         }
 
         return $rates;
@@ -82,40 +80,60 @@ class CurrencyRateService
         return $rates;
     }
 
-    // ================= FOREX =================
-    private function getBulkForexRates($currencies)
+    // ================= OANDA (forex / indices / commodities) =================
+    private function getBulkOandaRates(array $groupedCurrencies): array
     {
         $rates = [];
-        try {
-            $instruments = [];
+        $currencyMap = [];
+
+        foreach ($groupedCurrencies as $currencies) {
             foreach ($currencies as $currency) {
-                $instruments[] = $currency->sym . '_' . $currency->base;
+                $key = $currency->sym . '_' . $currency->base;
+                $currencyMap[$key] = $currency;
             }
-            
+        }
+
+        if (empty($currencyMap)) {
+            return $rates;
+        }
+
+        try {
             $oandaApi = setting('oando_api', '45a68744a7d51608ed4177c4e8d548ad-a396f9135670bd7373b82bb90ed2aea7');
             $oandaAccount = setting('oando_account_id', '101-004-15523510-001');
-            
-            
             $api = new Oanda($oandaApi, $oandaAccount);
-            $res = $api->getPrice(implode(',', $instruments));
 
             $priceData = [];
-            if (isset($res['prices']) && is_array($res['prices'])) {
-                foreach ($res['prices'] as $item) {
-                    $priceData[$item['instrument']] = $item['closeoutAsk'] ?? 0;
+            foreach (array_chunk(array_keys($currencyMap), 50) as $instrumentChunk) {
+                $res = $api->getPrice(implode(',', $instrumentChunk));
+                foreach ($res['prices'] ?? [] as $item) {
+                    $priceData[$item['instrument']] = $this->parseOandaMidPrice($item);
                 }
             }
 
-
-            foreach ($currencies as $currency) {
-                $key = $currency->sym . '_' . $currency->base;
+            foreach ($currencyMap as $key => $currency) {
                 $rate = floatval($priceData[$key] ?? 0);
                 $rates[] = $this->formatRate($currency, $rate);
             }
         } catch (\Exception $e) {
             // skip
         }
+
         return $rates;
+    }
+
+    /**
+     * Live mid price from bid/ask — closeoutAsk lags on forex ticks.
+     */
+    private function parseOandaMidPrice(array $item): float
+    {
+        $bid = isset($item['bids'][0]['price']) ? (float) $item['bids'][0]['price'] : 0;
+        $ask = isset($item['asks'][0]['price']) ? (float) $item['asks'][0]['price'] : 0;
+
+        if ($bid > 0 && $ask > 0) {
+            return ($bid + $ask) / 2;
+        }
+
+        return (float) ($item['closeoutAsk'] ?? $item['closeoutBid'] ?? 0);
     }
 
     // ================= STOCKS =================
@@ -192,84 +210,11 @@ private function getBulkStocksRates($currencies)
 
 
 
-    // ================= INDICES =================
-    private function getBulkIndicesRates($currencies)
-    {
-        $rates = [];
-        try {
-            // تجميع جميع الرموز في قائمة واحدة
-            $instruments = [];
-            foreach ($currencies as $currency) {
-                $instruments[] = $currency->sym . '_' . $currency->base;
-            }
-            
-            $oandaApi = setting('oando_api', '45a68744a7d51608ed4177c4e8d548ad-a396f9135670bd7373b82bb90ed2aea7');
-            $oandaAccount = setting('oando_account_id', '101-004-15523510-001');
-            
-            
-            $api = new Oanda($oandaApi, $oandaAccount);
-            $res = $api->getPrice(implode(',', $instruments));
-
-            $priceData = [];
-            if (isset($res['prices']) && is_array($res['prices'])) {
-                foreach ($res['prices'] as $item) {
-                    $priceData[$item['instrument']] = $item['closeoutAsk'] ?? 0;
-                }
-            }
-
-
-            foreach ($currencies as $currency) {
-                $key = $currency->sym . '_' . $currency->base;
-                $rate = floatval($priceData[$key] ?? 0);
-                $rates[] = $this->formatRate($currency, $rate);
-            }
-        } catch (\Exception $e) {
-        }
-
-        return $rates;
-    }
-
-    // ================= COMMODITIES =================
-    private function getBulkCommoditiesRates($currencies)
-    {
-        $rates = [];
-        try {
-            // تجميع جميع الرموز في قائمة واحدة
-            $instruments = [];
-            foreach ($currencies as $currency) {
-                $instruments[] = $currency->sym . '_' . $currency->base;
-            }
-            
-            $oandaApi = setting('oando_api', '45a68744a7d51608ed4177c4e8d548ad-a396f9135670bd7373b82bb90ed2aea7');
-            $oandaAccount = setting('oando_account_id', '101-004-15523510-001');
-            
-
-            $api = new Oanda($oandaApi, $oandaAccount);
-            $res = $api->getPrice(implode(',', $instruments));
-
-
-            $priceData = [];
-            if (isset($res['prices']) && is_array($res['prices'])) {
-                foreach ($res['prices'] as $item) {
-                    $priceData[$item['instrument']] = $item['closeoutAsk'] ?? 0;
-                }
-            }
-
-
-            foreach ($currencies as $currency) {
-                $key = $currency->sym . '_' . $currency->base;
-                $rate = floatval($priceData[$key] ?? 0);
-                $rates[] = $this->formatRate($currency, $rate);
-            }
-        } catch (\Exception $e) {
-        }
-
-        return $rates;
-    }
-
     // ================= Helpers =================
     private function formatRate($currency, $rate)
     {
+        $priceDecimals = $currency->type === 'forex' ? 5 : 4;
+
         return [
             'id'   => $currency->id,
             'sym'  => $currency->sym,
@@ -278,32 +223,32 @@ private function getBulkStocksRates($currencies)
             'leverage'=>$currency->leverage,
             "buy_spread"=> $currency->buy_spread,
             "sell_spread"=> $currency->sell_spread,
-            'current_price' => round($rate,5),
-            'rate' => round($rate,5),
-            'buy_p'  => $this->calculateBuyPrice($rate, $currency->buy_spread),
-            'sell_p' => $this->calculateSellPrice($rate, $currency->sell_spread),
+            'current_price' => round($rate, 5),
+            'rate' => round($rate, 5),
+            'buy_p'  => $this->calculateBuyPrice($rate, $currency->buy_spread, $priceDecimals),
+            'sell_p' => $this->calculateSellPrice($rate, $currency->sell_spread, $priceDecimals),
             'amount'=>$currency->amount,
         ];
     }
     
-     public function calculateBuyPrice($currentPrice,$sell_spreads){
-       
-        if((float) $sell_spreads > 0){
+     public function calculateBuyPrice($currentPrice, $sell_spreads, $decimals = 4)
+    {
+        if ((float) $sell_spreads > 0) {
             $sell_spread = floatval(($sell_spreads * $currentPrice) / 100);
             $s_price = floatval($currentPrice) - floatval($sell_spread);
-            return $this->truncate_number($s_price, 4);
+            return $this->truncate_number($s_price, $decimals);
         }
-        return $this->truncate_number($currentPrice, 4);
+        return $this->truncate_number($currentPrice, $decimals);
     }
 
-    public function calculateSellPrice($currentPrice,$buy_spreads){
-        if((float) $buy_spreads > 0){
+    public function calculateSellPrice($currentPrice, $buy_spreads, $decimals = 4)
+    {
+        if ((float) $buy_spreads > 0) {
             $buy_spread = floatval(($buy_spreads * $currentPrice) / 100);
             $b_price = floatval($currentPrice) + floatval($buy_spread);
-            return $this->truncate_number($b_price, 4);
+            return $this->truncate_number($b_price, $decimals);
         }
-        return $this->truncate_number($currentPrice, 4);
-        
+        return $this->truncate_number($currentPrice, $decimals);
     }
     
     function truncate_number($number, $decimals = 2) {

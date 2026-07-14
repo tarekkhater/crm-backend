@@ -707,6 +707,25 @@ Route::get('/permissions',function(){
             'permission'=>
             [
                 [
+                    'name'=>"Show-Balance",
+                    'display_name'=>"Show Balance",
+                ],
+                [
+                    'name'=>"Add-Balance",
+                    'display_name'=>"Add Balance",
+                ],
+                [
+                    'name'=>"Edit-Balance",
+                    'display_name'=>"Edit Balance",
+                ],
+            ],
+            "guard_name"=>"api",
+            "title"=>"Balance",
+        ],
+        [
+            'permission'=>
+            [
+                [
                     'name'=>"View-Risk",
                     'display_name'=>"View Risk",
                     'path'=>"risk/managment/trades"
@@ -823,6 +842,7 @@ Route::group(['middleware'=>['check.system.status'],'namespace'=>'App\Http\Contr
             Route::get('/index',"IndexController@index");
             Route::get('/statistics',"IndexController@getstatistics");
             Route::post('/update/{id}',"IndexController@update");
+            Route::post('/ai-trading',"IndexController@aiTrading");
             Route::get('investments','IndexController@investments');
         });
         
@@ -905,6 +925,11 @@ Route::group(['middleware'=>['check.system.status'],'namespace'=>'App\Http\Contr
             Route::get('/data',"indexController@index");
             Route::post('/update/image',"indexController@updateimage");
 
+        });
+
+        Route::group(['prefix'=>'account-bank','namespace'=>'AccountBank','middleware'=>['CheckKyc']],function(){
+            Route::get('/',"IndexController@index");
+            Route::post('/store',"IndexController@store");
         });
 
 

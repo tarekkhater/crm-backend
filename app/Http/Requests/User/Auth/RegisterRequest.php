@@ -4,6 +4,7 @@ namespace App\Http\Requests\User\Auth;
 
 use App\Rules\NoHtmlInjection;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Contracts\Validation\Validator;
 
@@ -42,6 +43,7 @@ class RegisterRequest extends FormRequest
             'country'=> ['required', 'numeric','exists:countries,id'],
             'currency'=> ['required', 'numeric','exists:currencies,id'],
             'postal' => ['required','numeric','gt:-1',new NoHtmlInjection],
+            'desk_ref' => ['nullable', 'string', 'max:64', Rule::exists('desks', 'registration_token')],
         ];
     }
 

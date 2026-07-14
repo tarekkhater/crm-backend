@@ -58,6 +58,8 @@ class IndexController extends Controller
                 "show-balance","show Trades",'show Trade'
             ], [
                 "add-balance","add balance",'add balance'
+            ], [
+                "edit-balance","edit balance",'edit balance'
             ],
 //            [
 //            "view-packages","view packages",'view packages'

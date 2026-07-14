@@ -20,6 +20,8 @@ use App\Services\Users\Leads\IndexFilterServices;
 use App\Models\AgentNotes;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\Validator;
+use App\Services\Users\UserWalletService;
+
 class IndexController extends Controller
 {
     public $searchpotential;
@@ -114,29 +116,39 @@ class IndexController extends Controller
     
     public function storeAbstractDesposit(Request $request){
             $this->validate($request, [
-            'id' => ['required', 'integer'],
-            'amount' => ['required'],
+            'id' => ['required', 'integer', 'exists:users,id'],
+            'amount' => ['required', 'numeric', 'gt:0'],
+            'type' => ['required', 'string', 'in:' . implode(',', UserWalletService::allowedTypes())],
+            'status' => ['nullable', 'in:0,1'],
             
             ]);
         $data = $request->all();
-        $data['account_type'] = $data['type'];
-        if($request->get('note')){
-            $note = $data['note'];
-        }else{
-            $note = 'Admin '. $data['account_type'];
-        }
-        $user = User::findOrFail($data['id']);
-        $user->load("userInfo");
-        if($data['type'] == 'deposit'){
-            $user->userInfo->balance = (float)$user->aBalance() + (float)$data['amount'];
-        }elseif($data['type'] == 'bonus'){
-            $user->userInfo->bonus = (float)$user->userInfo->bonus + (float)$data['amount'];
-        }else{
-            $user->userInfo->money = (int)$user->aBalance() - (int)$data['amount'];
+        $normalizedType = UserWalletService::normalizeType((string) $data['type']);
+        if (!$normalizedType) {
+            $this->setStatus(422);
+            $this->setMessage('Invalid wallet type');
+            return $this->sendApiResonse();
         }
 
+        $note = $request->get('note')
+            ? $data['note']
+            : ('Admin ' . UserWalletService::displayTypeLabel($normalizedType));
+
+        $user = User::findOrFail($data['id']);
+        $user->load("userInfo");
+        $amount = (float) $data['amount'];
+        $status = array_key_exists('status', $data) ? (int) $data['status'] : 1;
+
+        UserWalletService::applyCredit($user->userInfo, $normalizedType, $amount, $status);
         $user->userInfo->save();
-        Transaction::create(['user_id' => $data['id'], 'amount' => $data['amount'], 'type' => $data['type'], 'account_type' => $user->type_id,'note' => $note]);
+
+        Transaction::create([
+            'user_id' => $data['id'],
+            'amount' => $amount,
+            'type' => UserWalletService::displayTypeLabel($normalizedType),
+            'account_type' => $user->type_id,
+            'note' => $note,
+        ]);
         // if($data['notify'] > 0){
         //     $this->message($user, $note,'Account fund updated');
         // }

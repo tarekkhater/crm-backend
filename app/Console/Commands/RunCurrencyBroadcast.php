@@ -5,6 +5,10 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use App\Events\CurrencyRateUpdated;
 use App\Services\CurrencyRateService;
+use App\Models\Position;
+use App\Models\CurrencyPair;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class RunCurrencyBroadcast extends Command
 {
@@ -13,9 +17,18 @@ class RunCurrencyBroadcast extends Command
 
     private $currencyService;
     private $isRunning = true;
-    private $lastBroadcastData = []; 
+    private $lastBroadcastData = [];
     private $lastStocksBroadcast = 0;
-    private $lastFullSnapshot = 0;  
+    private $lastFullSnapshot = 0;
+    private $lastRateDbSync = 0;
+
+    /** Open positions with SL/TP cached in memory */
+    private $cachedPositions = [];
+    private $lastPositionsReload = 0;
+
+    // Reload positions from DB every 5s, sync DB rates every 30s
+    private const POSITIONS_RELOAD_INTERVAL = 2;
+    private const RATE_DB_SYNC_INTERVAL = 30;
 
     public function __construct(CurrencyRateService $currencyService)
     {
@@ -109,7 +122,37 @@ class RunCurrencyBroadcast extends Command
                 $currentTime = time();
 
                 $allData = $this->currencyService->getAllCurrencyRates();
-                
+
+                // Build ex_sym => rate map from fresh API data
+                $priceMap = [];
+                foreach ($allData as $asset) {
+                    if (isset($asset['name']) && ($asset['rate'] ?? 0) > 0) {
+                        $priceMap[$asset['name']] = (float) $asset['rate'];
+                    }
+                }
+
+                // Sync rates to DB every 30s so the cron fallback stays fresh
+                if ($currentTime - $this->lastRateDbSync >= self::RATE_DB_SYNC_INTERVAL) {
+                    $this->syncRatesToDb($priceMap);
+                    $this->lastRateDbSync = $currentTime;
+                }
+
+                // Reload open positions from DB every 5s
+                if ($currentTime - $this->lastPositionsReload >= self::POSITIONS_RELOAD_INTERVAL) {
+                    $this->reloadOpenPositions();
+                    $this->lastPositionsReload = $currentTime;
+                }
+
+                // Check SL/TP on EVERY iteration (~0.8s) using in-memory positions
+                if (!empty($this->cachedPositions) && !empty($priceMap)) {
+                    $closed = $this->checkCachedPositionsSLTP($priceMap);
+                    if ($closed > 0) {
+                        $this->warn("[SL/TP] Auto-closed {$closed} position(s)");
+                        // Force reload next iteration to pick up any new open positions
+                        $this->lastPositionsReload = 0;
+                    }
+                }
+
                 $isSnapshotTime = ($currentTime - $this->lastFullSnapshot >= $snapshotInterval);
                 
                 if ($isSnapshotTime) {
@@ -143,11 +186,11 @@ class RunCurrencyBroadcast extends Command
 
                     $changedAssets = [];
                     
-                    $changedOthers = $this->getChangedAssets($otherAssets, 'other');
+                    $changedOthers = $this->getChangedAssets($otherAssets);
                     $changedAssets = array_merge($changedAssets, $changedOthers);
                     
                     if ($currentTime - $this->lastStocksBroadcast >= $stocksInterval) {
-                        $changedStocks = $this->getChangedAssets($stocks, 'stocks');
+                        $changedStocks = $this->getChangedAssets($stocks);
                         $changedAssets = array_merge($changedAssets, $changedStocks);
                         $this->lastStocksBroadcast = $currentTime;
                     }
@@ -196,14 +239,93 @@ class RunCurrencyBroadcast extends Command
     }
     
     /**
+     * Load (or refresh) open positions with SL/TP into memory.
+     * Only hits the DB every POSITIONS_RELOAD_INTERVAL seconds.
+     */
+    private function reloadOpenPositions(): void
+    {
+        $this->cachedPositions = Position::query()
+            ->whereNull('close_at')
+            ->where(function ($q) {
+                $q->where('stop_loss', '>', 0)
+                  ->orWhere('take_profit', '>', 0);
+            })
+            ->with(['user.userInfo'])
+            ->get()
+            ->keyBy('id')
+            ->all();
+    }
+
+    /**
+     * Check every cached open position against the fresh price map.
+     * Runs on EVERY broadcast iteration (~0.8s) — no DB read.
+     */
+    private function checkCachedPositionsSLTP(array $priceMap): int
+    {
+        $closed = 0;
+
+        foreach ($this->cachedPositions as $id => $position) {
+            // Skip already-closed (shouldn't happen, but guard anyway)
+            if ($position->close_at !== null) {
+                unset($this->cachedPositions[$id]);
+                continue;
+            }
+
+            $freshPrice = $priceMap[$position->symbol] ?? null;
+            if (!$freshPrice || $freshPrice <= 0) continue;
+
+            $profit = $position->calculateFloatingProfit($freshPrice);
+
+            if ($position->checkAndCloseByPnL($profit, $freshPrice)) {
+                unset($this->cachedPositions[$id]);
+                $closed++;
+                $exitPrice = $position->quotedExitPrice($freshPrice);
+                Log::info("SL/TP auto-close: position #{$id} | symbol={$position->symbol} | mid={$freshPrice} | exit={$exitPrice} | profit={$profit}");
+            }
+        }
+
+        return $closed;
+    }
+
+    /**
+     * Sync live prices to currency_pairs.rate in DB so the cron fallback
+     * always has fresh data (runs every RATE_DB_SYNC_INTERVAL seconds).
+     */
+    private function syncRatesToDb(array $priceMap): void
+    {
+        if (empty($priceMap)) return;
+
+        $chunks = array_chunk($priceMap, 100, true);
+        foreach ($chunks as $chunk) {
+            $symbols = array_keys($chunk);
+            $cases = 'CASE ex_sym';
+            $bindings = [];
+            foreach ($chunk as $exSym => $rate) {
+                $cases .= ' WHEN ? THEN ?';
+                $bindings[] = $exSym;
+                $bindings[] = $rate;
+            }
+            $cases .= ' END';
+            $placeholders = implode(',', array_fill(0, count($symbols), '?'));
+            $bindings = array_merge($bindings, $symbols);
+
+            DB::statement(
+                "UPDATE currency_pairs SET rate = {$cases} WHERE ex_sym IN ({$placeholders})",
+                $bindings
+            );
+        }
+    }
+
+    /**
      * نجيب الـ assets اللي اتغيرت فقط
      */
-    private function getChangedAssets($assets, $type)
+    private function getChangedAssets(array $assets): array
     {
         $changedAssets = [];
         
         foreach ($assets as $asset) {
             $assetId = $asset['id'];
+            $type = $asset['type'] ?? 'other';
             $key = "{$type}_{$assetId}";
             
             if (!isset($this->lastBroadcastData[$key])) {

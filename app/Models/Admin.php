@@ -18,6 +18,10 @@ class Admin extends Authenticatable implements MustVerifyEmail, JWTSubject
     use HasFactory;
     use SoftDeletes;
     use HasRoles;
+
+    /** Must match Spatie roles/permissions guard (see `auth.guards.api` for admins). */
+    protected $guard_name = 'api';
+
     protected $dates = ['deleted_at'];
 
     protected $fillable = [
@@ -44,23 +48,38 @@ class Admin extends Authenticatable implements MustVerifyEmail, JWTSubject
 
 
     public static function ids(){
-            $ids = [];
-        
-        if (auth()->check()) {
-            $user = auth()->user();
-            if (auth()->user()->type_id == 3) {
-                $ids = Admin::select()->pluck('id');
-            } else if (auth()->user()->type_id == 5) {
-                $idsTeamLeader = Admin::where('broker_id', auth()->user()->id)->whereIn('type_id', [7, 8])->pluck('id');
-                $ids = UserManager::where('admin_id', $idsTeamLeader)->where('type', '0')->pluck('user_id');
-            } else if (auth()->user()->type_id == 6) {
-                $ids = UserManager::where('admin_id', auth()->user()->id)->where('type', '0')->pluck('user_id');
-            }
-        
+        $ids = [];
+
+        if (!auth()->check()) {
+            return $ids;
         }
-        
+
+        $admin = auth()->user();
+
+        // Use withoutGlobalScopes() to avoid recursive scope application
+        if ($admin->type_id == 3) {
+            $isDeskScoped = ($admin->sub_type_id == 4) || !empty($admin->desk_id);
+
+            if ($isDeskScoped && $admin->desk_id) {
+                $ids = static::withoutGlobalScopes()
+                    ->where('desk_id', $admin->desk_id)
+                    ->whereNull('deleted_at')
+                    ->pluck('id');
+            } else {
+                $ids = static::withoutGlobalScopes()->whereNull('deleted_at')->pluck('id');
+            }
+        } elseif ($admin->type_id == 5) {
+            $ids = static::withoutGlobalScopes()
+                ->where('broker_id', $admin->id)
+                ->whereNull('deleted_at')
+                ->pluck('id');
+        } elseif ($admin->type_id == 6) {
+            $ids = getTeamLeaderVisibleAgentIds($admin)->push($admin->id)->unique()->values();
+        } elseif (in_array((int) $admin->type_id, [7, 8], true)) {
+            $ids = collect([$admin->id]);
+        }
+
         return $ids;
-    
     }
 
     protected static function booted(): void

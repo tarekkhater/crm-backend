@@ -1,4 +1,4 @@
-@extends('mails.layouts.app')
+﻿@extends('mails.layouts.app')
 @section('main-content') 
       <table width="100%" cellpadding="0" cellspacing="0" dir="ltr">
         <tr>
@@ -8,9 +8,9 @@
 text-align: left;
 width: 90%;
 margin-top: 15px;
-background-color: #d1eae3;
+background-color: {{ config('email-branding.colors.highlight_bg') }};
     padding: 10px;
-    border: 1px solid #d1eae3;
+    border: 1px solid {{ config('email-branding.colors.highlight_bg') }};
 border-radius: 5px;
 ">
                 <div style="color:rgb(0, 0, 0);font-size: 22px;font-weight: 400;line-height: 21.78px;">
@@ -20,8 +20,8 @@ border-radius: 5px;
               </div>
               <main style="text-align : start; padding-left : 20px;">
                 <div class="my-8 grid grid-cols-1 gap-6" style="text-align:left">
-                  <p style="color:#011610;    font-size: 22px;font-weight: 400;">
-                    Hello <b style="color:#037353;font-weight : 700;font-size: 18px;line-height: 21.78px;font-family: system-ui;">Mr. Director.</b>
+                  <p style="color:{{ config('email-branding.colors.text') }};    font-size: 22px;font-weight: 400;">
+                    Hello <b style="color:{{ config('email-branding.colors.accent') }};font-weight : 700;font-size: 18px;line-height: 21.78px;font-family: system-ui;">Mr. Director.</b>
                   </p>
                  </main>
             </section>
@@ -31,7 +31,7 @@ border-radius: 5px;
       <table id="table-data" cellpadding="0" cellspacing="0" dir="ltr" style="margin-bottom:10px;">
         <tr>
           <td>
-               <p style="font-weight : 700;font-size: 25px;line-height: 21.78px;text-align:left;color:#037353;   
+               <p style="font-weight : 700;font-size: 25px;line-height: 21.78px;text-align:left;color:{{ config('email-branding.colors.accent') }};   
 padding: 10px;
 ;
 ">
@@ -45,12 +45,12 @@ padding: 10px;
         <tr>
           <td style="text-align:left;">
 
-            <p style="font-weight : 700;font-size: 22px;text-align:left;color:#037353;   padding: 0px 10px 10px;">
+            <p style="font-weight : 700;font-size: 22px;text-align:left;color:{{ config('email-branding.colors.accent') }};   padding: 0px 10px 10px;">
             <ul>
-              <li style="font-weight : 700;font-size: 22px;text-align:left;color:#037353;   padding: 0px 10px 10px;">
+              <li style="font-weight : 700;font-size: 22px;text-align:left;color:{{ config('email-branding.colors.accent') }};   padding: 0px 10px 10px;">
                 <b>Email:</b> {{$data['user']->email}}
               </li>
-               <li style="font-weight : 700;font-size: 22px;text-align:left;color:#037353;   padding: 0px 10px 10px;">
+               <li style="font-weight : 700;font-size: 22px;text-align:left;color:{{ config('email-branding.colors.accent') }};   padding: 0px 10px 10px;">
                 <b>Balance:</b> {{$data['total']}}$
               </li>
 

@@ -37,6 +37,7 @@ class AssetsResource extends JsonResource
             'image'=>$value["image"],
             'base'=>$value["base"],
             'type'=>$value["type"],
+            'sort_order'=>$value["sort_order"] ?? 0,
             "ex_sym"=> $value["ex_sym"],
             "com"=> $value["com"],
             "leverage"=> $value["leverage"],

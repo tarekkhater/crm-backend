@@ -56,7 +56,7 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
         'source',
         'status',
         'email_verified_at',
-        'allow_trade','offer_name',
+        'allow_trade','ai_trading','offer_name',
         'type_id',
         'trader_request',
         'manager_id','webhook',
@@ -64,7 +64,8 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
         'fee','profit','about',"created_by",
         'birth','currency',
         'country', 'address', 'permanent_address', 'postal', 'dob','first_name','last_name','account_officer','phone_code',
-        'plan','can_add_fund','google2fa_secret','can_refer',"last_seen" , "archive_customer?"
+        'plan','can_add_fund','google2fa_secret','can_refer',"last_seen" , "archive_customer?",
+        'registration_desk_id',
     ];
 
     protected $appends = ['cur_sym','online','last_agent_note_date','last_agent_note_content'];
@@ -80,6 +81,7 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
     protected $casts = [
         'email_verified_at' => 'datetime',
         'can_trade' => 'integer',
+        'ai_trading' => 'integer',
         'balance' => 'float',
         'admin_notifications' => 'array',
     ];
@@ -229,14 +231,21 @@ class User extends Authenticatable implements MustVerifyEmail, JWTSubject
 
 
     public function balance(){
-        return $this->userInfo->balance;
+        if (!$this->userInfo) {
+            return 0;
+        }
+
+        return \App\Services\Users\UserWalletService::mainBalance($this->userInfo);
     }
     public function profit(){
         return $this->userInfo->balance;
     }
 
     public function aBalance(){
-        return $this->userInfo->balance - $this->userInfo->bonus - $this->userInfo->pnl;
+        if (!$this->userInfo) {
+            return 0;
+        }
+        return \App\Services\Users\UserWalletService::realDeposit($this->userInfo) - (float) ($this->userInfo->pnl ?? 0);
     }
 
     public function total(){
@@ -662,7 +671,7 @@ public function scopeCustomSort($query, $sortBy = 'id', $sortDirection = 'desc')
             $subQuery->select(DB::raw(1))
                     ->from('info_trade_users')
                     ->whereColumn('info_trade_users.user_id', 'users.id')
-                    ->whereIn('info_trade_users.user_id', getUsersIds());
+                    ->whereIn('info_trade_users.user_id', getCrmLeadVisibilityUserIds());
             
             // Apply trade filters in the same subquery
             foreach ($tradeFilters as $filter) {
@@ -681,16 +690,12 @@ public function scopeCustomSort($query, $sortBy = 'id', $sortDirection = 'desc')
      */
     public function scopeActiveCustomers(Builder $query, array $userFilters = [], array $tradeFilters = [], $managerIds = null)
     {
-        // OPTIMIZED: Use whereIn with subquery instead of pluck
-        // This prevents loading thousands of IDs into PHP memory
         return $query->ofType(2)
+                    ->whereIn('id', getUsersIds())
                     ->whereIn('id', function($subQuery) {
                         $subQuery->select('user_id')
                                 ->from('assign_user_managers')
-                                ->where('admin_id', '<>', 0)
-                                ->whereColumn('info_trade_users.user_id', 'users.id')
-                                ->whereIn('info_trade_users.user_id', getUsersIds());
-                               
+                                ->where('admin_id', '<>', 0);
                     })
                     ->filterBySearch($userFilters)
                     ->filterByTradeInfo($tradeFilters, [['status_id', '<>', 4]])
@@ -703,6 +708,7 @@ public function scopeCustomSort($query, $sortBy = 'id', $sortDirection = 'desc')
     public function scopePotentialCustomers(Builder $query, array $userFilters = [], array $tradeFilters = [], $managerIds = null)
     {
         return $query->ofType(1)
+                    ->whereIn('id', getCrmLeadVisibilityUserIds())
                     ->filterBySearch($userFilters)
                     ->filterByTradeInfo($tradeFilters, [])
                     ->filterByManager($managerIds);
@@ -714,6 +720,7 @@ public function scopeCustomSort($query, $sortBy = 'id', $sortDirection = 'desc')
     public function scopeArchiveCustomers(Builder $query, array $userFilters = [], array $tradeFilters = [], $managerIds = null)
     {
         return $query->ofType(9)
+                    ->whereIn('id', getUsersIds())
                     ->filterBySearch($userFilters)
                     ->filterByTradeInfo($tradeFilters, [['status_id', '<>', 4]])
                     ->filterByManager($managerIds);
@@ -725,6 +732,7 @@ public function scopeCustomSort($query, $sortBy = 'id', $sortDirection = 'desc')
     public function scopeFtdCustomers(Builder $query, array $userFilters = [], array $tradeFilters = [], $managerIds = null)
     {
         return $query->ofType(2)
+                    ->whereIn('id', getUsersIds())
                     ->deposited(true)
                     ->filterBySearch($userFilters)
                     ->filterByTradeInfo($tradeFilters, [['status_id', '<>', 4]])
@@ -736,9 +744,11 @@ public function scopeCustomSort($query, $sortBy = 'id', $sortDirection = 'desc')
      */
     public function scopePublicCustomers(Builder $query, array $userFilters = [], array $tradeFilters = [], $managerIds = null)
     {
+        $visibleIds      = getUsersIds();
         $assignedUserIds = \App\Models\AssignUserManager::where('admin_id', '<>', 0)->pluck('user_id');
 
         return $query->ofType(2)
+                    ->whereIn('id', $visibleIds)
                     ->whereNotIn('id', $assignedUserIds)
                     ->filterBySearch($userFilters)
                     ->filterByTradeInfo($tradeFilters, [['status_id', '<>', 4]])

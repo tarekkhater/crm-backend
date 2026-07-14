@@ -50,6 +50,8 @@ class ActiveController extends Controller
                 "show-balance","show Trades",'show Trade'
             ], [
                 "add-balance","add balance",'add balance'
+            ], [
+                "edit-balance","edit balance",'edit balance'
             ],
 //            [
 //            "view-packages","view packages",'view packages'
@@ -94,24 +96,12 @@ class ActiveController extends Controller
     }
 
     public function getUsers(){
-        $data = [];
-        if(auth()->user()->type_id == 3){
-            $data = User::where('type_id',2)->paginate(15);
-        }else if(auth()->user()->type_id == 4){
-            $ids = UserManager::where('admin_id',auth()->user()->id)->pluck('user_id');
-            $data = User::whereIn('id',$ids)->where('type_id',2)->paginate(15);
-        }else if(auth()->user()->type_id == 5){
-            $ids = IBClient::where('ib_id',auth()->user()->id)->pluck('user_id');
-            $data = User::whereIn('id',$ids)->where('type_id',2)->paginate(15);
-        }else{
-            $ids = AgentUser::where('agent_id',auth()->user()->id)->pluck('user_id');
-            $data = User::whereIn('id',$ids)->where('type_id',2)->paginate(15);
-        }
-        return  $data;
+        $data = User::whereIn('id', getUsersIds())->where('type_id', 2)->paginate(15);
+        return $data;
     }
 
     public function all(){
-        $users = User::where('type_id',5)->get();
+        $users = User::whereIn('id', getUsersIds())->where('type_id', 2)->get();
         $this->setData($users);
         $this->setMessage("success");
         return $this->sendApiResonse();

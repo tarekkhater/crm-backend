@@ -34,39 +34,14 @@ class IndexController extends Controller
     // }
     public function all()
     {
-        try {
-            // Check authentication
-            if (!auth()->check()) {
-                $this->setMessage("Unauthorized access.");
-                return $this->sendApiResonse();
-            }
+        $ids   = getAgentsIds();
+        $users = Admin::whereIn('id', $ids)->where('type_id', 7)
+                      ->select('id', \Illuminate\Support\Facades\DB::raw("CONCAT(name, ' ', surname) as email"), 'country')
+                      ->get();
 
-            // Fetch agent IDs directly within the method
-            $currentUserTypeId = auth()->user()->type_id;
-            $ids = ($currentUserTypeId != 6)
-                ? Admin::where('type_id', 7)->pluck('id')->toArray()
-                : UserManager::where('admin_id', auth()->user()->id)
-                    ->where('type', '1')
-                    ->pluck('user_id')
-                    ->toArray();
-
-            // Fetch users based on the retrieved IDs
-            $users = Admin::whereIn('id', $ids)->where('type_id', 7)->get();
-
-            // Check if users were found
-            if ($users->isEmpty()) {
-                $this->setMessage("No agents found.");
-            } else {
-                $this->setData($users);
-                $this->setMessage("Agents fetched successfully.");
-            }
-
-            return $this->sendApiResonse();
-        } catch (\Exception $e) {
-            // Handle exceptions
-            $this->setMessage("An error occurred: " . $e->getMessage());
-            return $this->sendApiResonse();
-        }
+        $this->setData($users);
+        $this->setMessage($users->isEmpty() ? "No agents found." : "success");
+        return $this->sendApiResonse();
     }
 
 
@@ -112,27 +87,13 @@ class IndexController extends Controller
         }
     }
     public function index(Request $request){
-        $ids = getAgentsIds();
-        if($request->type == 2){
-           if(auth()->user()->type_id != 6){
+        $ids   = getAgentsIds();
+        $users = Admin::with(['teamleader', 'broker'])
+                      ->whereIn('id', $ids)
+                      ->where('type_id', 7)
+                      ->paginate(15);
 
-            $users = Admin::with(['teamleader','broker'])->whereIn('id',$ids)->where('type_id',7)->paginate(15);
-            $this->setData($users);
-            }else{
-                $users = Admin::with(['teamleader','broker'])->whereIn('id',$ids)->where('type_id',7)->paginate(15);
-                $this->setData($users);
-            }
-        }else{
-            if (auth()->user()->type_id != 6) {
-                $users = Admin::with(['teamleader','broker'])->whereIn('id', $ids)->where('type_id', 8)->paginate(15);
-                $this->setData($users);
-            } else {
-                $users = Admin::with(['teamleader','broker'])->whereIn('id', $ids)->where('type_id', 8)->paginate(15);
-                $this->setData($users);
-            }
-        }
-
-
+        $this->setData($users);
         $this->setMessage("success");
         return $this->sendApiResonse();
     }
@@ -164,6 +125,7 @@ class IndexController extends Controller
                     'type'=>'1',
                 ]);
                 $manager = Admin::find($data['manager_id']);
+                $user->manager_id = $data['manager_id'];
                 $user->broker_id = $manager->broker_id ;
                 $user->save();
             }
@@ -223,9 +185,12 @@ public function Blocked(Request $request){
 }
 
     public function customers(){
-        // dd("test");
-        $pluckId = AgentUser::where('agent_type','1')->pluck('user_id');
-        $users = User::whereNotIn('id',$pluckId)->with(['users','countries'])->where('type_id',2)->get();
+        $assignedIds = AgentUser::where('agent_type','1')->pluck('user_id');
+        $users = User::whereIn('id', getUsersIds())
+                     ->whereNotIn('id', $assignedIds)
+                     ->with(['countries'])
+                     ->where('type_id', 2)
+                     ->get();
         $this->setData($users);
         $this->setMessage("success");
         return $this->sendApiResonse();

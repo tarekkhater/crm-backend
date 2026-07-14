@@ -16,7 +16,9 @@ use App\Models\User;
 use App\Models\Transaction;
 use App\Models\UserManager;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\DB;
 use App\Mail\depositMail;
+use App\Services\Users\UserWalletService;
 class IndexController extends Controller
 {
     public function index(Request $request){
@@ -38,6 +40,7 @@ class IndexController extends Controller
         return $this->sendApiResonse();
     }
     public function userDeposit($id){
+        abort_unless(in_array((int)$id, array_map('intval', getUsersIds()->toArray())), 403);
         $deposites = Deposit::with(['user','user.countries','user.TradingAccount','amount','plan'])->where('user_id',$id)->paginate(20);
         // $result = [
         //     'data'         => $this->responseData($deposites->items()),
@@ -58,31 +61,62 @@ class IndexController extends Controller
     public function statusDeposit(Request $request){
         $request->validate([
             'id'=>'required|numeric|exists:deposits,id',
-            'status'=>'required'
+            'status'=>'required|in:0,1,2'
         ]);
-        $deposit = Deposit::where('id',$request->id)->where('status','<>',1)->first();
-        if(!$deposit){
-            $this->setMessage("You Not Allowed To Change Status Request");
-            $this->setStatus(422);
-            return $this->sendApiResonse();
-        }
-        $deposit->update([
-            'status'=>$request->status,
-            'message'=>isset($request->message)?$request->message:null,
-        ]);
-        if(isset($request->proof)){
-            $deposit->update([
-                'proof'=> uploadRealImage($request->proof,"Deposit"),
-            ]);  
-        }
-        $olduser = InfoTradeUser::where('user_id',$deposit->user_id)->first();
-        if($request->status == 1){
-            $user = InfoTradeUser::where('user_id',$deposit->user_id)->first();
-            $user->balance += $deposit->amount;
-            $user->save();
-            // ($user,$total,$money,$amount,$join_at)
-            Mail::to("$user->email")->send(new depositMail($user,$user->balance,$olduser->balance,$deposit->amount,$deposit->created_at));
-        }       
+
+        $requestedStatus = (int) $request->status;
+
+        DB::transaction(function () use ($request, $requestedStatus) {
+            $deposit = Deposit::where('id', $request->id)->lockForUpdate()->firstOrFail();
+
+            if ((int) $deposit->status === $requestedStatus) {
+                return;
+            }
+
+            // Never re-credit already approved deposits.
+            if ((int) $deposit->status === 1 && $requestedStatus !== 1) {
+                return;
+            }
+
+            $deposit->status = $requestedStatus;
+            $deposit->message = $request->message ?? $deposit->message;
+            if (isset($request->proof)) {
+                $deposit->proof = uploadRealImage($request->proof, "Deposit");
+            }
+            $deposit->save();
+
+            if ($requestedStatus !== 1) {
+                return;
+            }
+
+            $wallet = InfoTradeUser::where('user_id', $deposit->user_id)->lockForUpdate()->first();
+            if (!$wallet) {
+                return;
+            }
+
+            $oldMain = UserWalletService::mainBalance($wallet);
+            $amount = (float) $deposit->amount;
+
+            $credit = UserWalletService::credit($wallet);
+            $movedFromCredit = min($credit, $amount);
+            if ($movedFromCredit > 0) {
+                $wallet->awaiting_deposit = $credit - $movedFromCredit;
+            }
+            if (UserWalletService::hasRealDepositColumn()) {
+                $wallet->real_deposit = UserWalletService::realDeposit($wallet) + $amount;
+            } else {
+                $wallet->balance = UserWalletService::realDeposit($wallet) + $amount;
+            }
+            UserWalletService::syncBalance($wallet);
+            $wallet->save();
+
+            $user = User::find($deposit->user_id);
+            if ($user && !empty($user->email)) {
+                $newMain = UserWalletService::mainBalance($wallet);
+                Mail::to($user->email)->send(new depositMail($user, $newMain, $oldMain, $amount, $deposit->created_at));
+            }
+        });
+
         $this->setMessage("success");
         return $this->sendApiResonse();
     }
@@ -173,9 +207,8 @@ $data = [];
 
         $user = User::findOrFail($data['user_id']);
 
-        $user->userInfo->balance = $user->userInfo->balance + $data['amount'];
-
-        $user->save();
+        UserWalletService::applyCreditToMain($user->userInfo, (float) $data['amount']);
+        $user->userInfo->save();
 
         Transaction::create(['user_id' => $data['user_id'], 'amount' => $data['amount'], 'type' => 'deposit', 'account_type' => 'balance', 'note' => 'deposit']);
 

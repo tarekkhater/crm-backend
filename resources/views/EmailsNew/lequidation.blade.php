@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -44,13 +44,13 @@
       >
         <div style="padding: 50px">
           <div>
-            <img style="width: 140px" src="images/logo.png" alt="logo" />
+            <img style="width: 140px" src="{{ \App\Helpers\EmailBranding::logoUrl() }}" alt="logo" />
           </div>
 
           <div>
             <h3
               style="
-                background-color: #f0e9ff;
+                background-color: {{ config('email-branding.colors.highlight_bg') }};
                 padding: 10px 20px;
                 font-size: 18px;
                 border-radius: 6px;
@@ -75,7 +75,7 @@
             >
               We regret to inform you that the SOLUSDT position in your USD-M
               Futures account
-              <span style="color: #007aff">(@yahoo.com;)</span> has been
+              <span style="color: {{ config('email-branding.colors.primary') }}">(@yahoo.com;)</span> has been
               triggered into liquidation process as your
               <span style="font-weight: 700">10.950078 USDT</span> Margin
               Balance was below
@@ -112,7 +112,7 @@
               Unrealized PNL &lt; Maintenance Margin, meaning the
               <span
                 style="
-                  color: #007aff;
+                  color: {{ config('email-branding.colors.primary') }};
                   text-decoration: underline;
                   text-underline-offset: 4px;
                 "
@@ -123,7 +123,7 @@
               Calculator before opening a position. View
               <span
                 style="
-                  color: #007aff;
+                  color: {{ config('email-branding.colors.primary') }};
                   text-decoration: underline;
                   text-underline-offset: 4px;
                 "
@@ -247,7 +247,7 @@
               To learn more about how to protect yourself, visit our
               <span
                 style="
-                  color: #007aff;
+                  color: {{ config('email-branding.colors.primary') }};
                   text-decoration: underline;
                   text-underline-offset: 4px;
                 "
@@ -255,7 +255,7 @@
               >
               For more information, see<span
                 style="
-                  color: #007aff;
+                  color: {{ config('email-branding.colors.primary') }};
                   text-decoration: underline;
                   text-underline-offset: 4px;
                 "
@@ -265,7 +265,7 @@
               and
               <span
                 style="
-                  color: #007aff;
+                  color: {{ config('email-branding.colors.primary') }};
                   text-decoration: underline;
                   text-underline-offset: 4px;
                 "
@@ -273,7 +273,7 @@
               >Don’t recognize this activity? Please
               <span
                 style="
-                  color: #007aff;
+                  color: {{ config('email-branding.colors.primary') }};
                   text-decoration: underline;
                   text-underline-offset: 4px;
                 "
@@ -281,7 +281,7 @@
               >and contact
               <span
                 style="
-                  color: #007aff;
+                  color: {{ config('email-branding.colors.primary') }};
                   text-decoration: underline;
                   text-underline-offset: 4px;
                 "
@@ -296,10 +296,10 @@
           </div>
         </div>
         <div
-          style="background-color: #007aff; padding: 20px 30px; color: white"
+          style="background-color: {{ config('email-branding.colors.primary') }}; padding: 20px 30px; color: white"
         >
           <div>
-            <img style="width: 140px" src="images/logo.png" alt="logo" />
+            <img style="width: 140px" src="{{ \App\Helpers\EmailBranding::logoUrl() }}" alt="logo" />
           </div>
           <p
             style="
@@ -311,7 +311,7 @@
               margin: 0 auto 10px;
             "
           >
-            You are receiving this mail because you registered to join the CIRCO
+            You are receiving this mail because you registered to join the Paradox Investing
             platform as a user or a creator. This also shows that you agree to
             our Terms of use and Privacy Policies. If you no longer want to
             receive mails from use, click the unsubscribe link below to

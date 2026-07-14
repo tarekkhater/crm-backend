@@ -2,31 +2,21 @@
 
 return [
 
-    // These CSS rules will be applied after the regular template CSS
-
-    /*
-        'css' => [
-            '.button-content .button { background: red }',
-        ],
-    */
-
     'colors' => [
-
-        'highlight' => '#004ca3',
-        'button'    => '#004cad',
-
+        'highlight' => env('MAIL_COLOR_PRIMARY', '#1A1A1B'),
+        'button'    => env('MAIL_COLOR_ACCENT', '#22C55E'),
     ],
 
     'view' => [
-        'senderName'  => null,
+        'senderName'  => env('MAIL_COMPANY_NAME', 'Paradox Investing'),
         'reminder'    => null,
         'unsubscribe' => null,
         'address'     => null,
 
-        'logo'        => [
-            'path'   => '%PUBLIC%/images/fav.png',
-            'width'  => '70px',
-            'height' => '70px',
+        'logo' => [
+            'path'   => '%PUBLIC%/images/logo.png',
+            'width'  => '180px',
+            'height' => 'auto',
         ],
 
         'twitter'  => null,

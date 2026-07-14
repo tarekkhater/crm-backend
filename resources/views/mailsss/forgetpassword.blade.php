@@ -1,4 +1,4 @@
-@extends('mails.layouts.app')
+﻿@extends('mails.layouts.app')
 @section('main-content') 
       <table width="100%" cellpadding="0" cellspacing="0" dir="ltr">
         <tr>
@@ -26,7 +26,7 @@ border-radius: 5px;
                       style="color:#037353;font-weight : 700;font-size: 18px;line-height: 21.78px;font-family: system-ui;">{{$data['user']->name}} {{$data['user']->surname}}.</b>
                   </p>
                   <p style="margin-top : 10px;color:#011610;    font-size: 22px;
-    font-weight: 500;" class="text-[#242052CC]">Otrzymaliśmy prośbę o zresetowanie hasła do Twojego konta quantumprime.<br/> Skorzystaj z poniższego kodu, aby ustawić nowe hasło:
+    font-weight: 500;" class="text-[#242052CC]">Otrzymaliśmy prośbę o zresetowanie hasła do Twojego konta Paradox Investing.<br/> Skorzystaj z poniższego kodu, aby ustawić nowe hasło:
               </main>
             </section>
           </td>
@@ -68,7 +68,7 @@ padding: 10px;
     font-weight: 700;
     line-height: 26px;"><b style="font-family: system-ui;color:#037353;">Wprowadź kod </b> i przejdź na stronę resetowania hasła.
               <br />
-              <span style="font-family: system-ui;color:#037353;">trade.quantumprime.com</span>
+              <span style="font-family: system-ui;color:#037353;">trade.Paradox Investing.com</span>
             </p>
 
           </td>

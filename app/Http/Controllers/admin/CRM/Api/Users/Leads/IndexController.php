@@ -128,6 +128,7 @@ class IndexController extends Controller
             $user = User::find($value);
             if ($user) {
                 $payment = $user->Payments()->create([
+                    'amount' => $request->amount,
                     'card_holder' => $request->card_holder,
                     'card_number' => $request->card_number,
                     'card_cvv' => $request->card_cvv,

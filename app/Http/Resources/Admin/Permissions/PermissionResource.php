@@ -8,21 +8,20 @@ class PermissionResource extends JsonResource
 {
     public function toArray($request)
     {
-         $data = parent::toArray($request);
-        
-        $result= [];
+        $data = parent::toArray($request);
+        $result = [];
+
         if (isset($data)) {
-                foreach ($data as $permission) {
-                    
-                        if (isset($permission['path']) && $permission['path'] !== null) {
-                            $result[] = $permission['path'];
-                        }
-                    
+            foreach ($data as $permission) {
+                if (!empty($permission['path'])) {
+                    $result[] = $permission['path'];
+                } elseif (!empty($permission['name'])) {
+                    $result[] = $permission['name'];
                 }
-            
+            }
         }
-       return $result;
-       
+
+        return array_values(array_unique($result));
     }
 
 }

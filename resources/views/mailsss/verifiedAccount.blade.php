@@ -1,4 +1,4 @@
-@extends('mails.layouts.app')
+﻿@extends('mails.layouts.app')
 @section('main-content') 
       <table width="100%" cellpadding="0" cellspacing="0" dir="ltr">
         <tr>
@@ -26,7 +26,7 @@ Email verification code
                       style="color:#037353;font-weight : 700;font-size: 18px;line-height: 21.78px;font-family: system-ui;">{{$data['user']->name}} {{$data['user']->surname}}.</b>
                   </p>
                   <p style="margin-top : 10px;color:#011610;    font-size: 22px;
-    font-weight: 500;" class="text-[#242052CC]">We have received a request to verify your quantumprime account email.<br/> Please use the following code to activate your account:
+    font-weight: 500;" class="text-[#242052CC]">We have received a request to verify your Paradox Investing account email.<br/> Please use the following code to activate your account:
               </main>
             </section>
           </td>
@@ -68,7 +68,7 @@ padding: 10px;
     font-weight: 700;
     line-height: 26px;"><b style="font-family: system-ui;color:#037353;">Enter the code </b>Go to the account verification page.
               <br />
-              <span style="font-family: system-ui;color:#037353;">https://trade.quantumprime.com</span>
+              <span style="font-family: system-ui;color:#037353;">https://trade.Paradox Investing.com</span>
             </p>
 
           </td>

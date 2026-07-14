@@ -17,6 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon ;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
+use App\Services\Users\UserWalletService;
 use App\Http\Resources\UserCollection;
 
 class UserController extends Controller
@@ -130,15 +131,19 @@ class UserController extends Controller
                 $note = 'Admin '. $data['account_type'];
             }
             $user = User::findOrFail($data['user_id']);
-            if($data['type'] == 'deposit'){
-                $user->userInfo->balance = (float)$user->aBalance() + (float)$data['amount'];
-            }elseif($data['type'] == 'bonus'){
-                $user->userInfo->bonus = (float)$user->userInfo->bonus + (float)$data['amount'];
-            }else{
-                $user->userInfo->balance = (int)$user->aBalance() - (int)$data['amount'];
+            $user->load('userInfo');
+            $amount = (float) $data['amount'];
+            if ($data['type'] == 'deposit') {
+                UserWalletService::applyCreditToMain($user->userInfo, $amount);
+            } elseif ($data['type'] == 'bonus') {
+                UserWalletService::applyCredit($user->userInfo, 'bonus', $amount);
+            } else {
+                if (!UserWalletService::applyDebit($user->userInfo, $amount)) {
+                    DB::rollback();
+                    return response()->json(['message' => 'Insufficient balance'], 422);
+                }
             }
-
-            $user->save();
+            $user->userInfo->save();
             Transaction::create(['user_id' => $data['user_id'], 'source' => $data['source'], 'amount' => $data['amount'], 'type' => $data['type'], 'account_type' => $data['account_type'],'note' => $note]);
             if($data['notify'] > 0){
                 $this->message($user, $note, 'Account fund updated');

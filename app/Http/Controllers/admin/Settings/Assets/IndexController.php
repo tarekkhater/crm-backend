@@ -136,6 +136,19 @@ class IndexController extends Controller
         return $this->sendApiResonse();
     }
 
+    public function updateOrder(Request $request)
+    {
+        $request->validate([
+            'type' => 'required|string',
+            'order' => 'required|array|min:1',
+            'order.*' => 'required|numeric|exists:currency_pairs,id',
+        ]);
+
+        $this->assets->updateOrder($request->type, $request->order);
+        $this->setMessage("success");
+        return $this->sendApiResonse();
+    }
+
 
 
     public function destroy($id)

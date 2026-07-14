@@ -36,6 +36,7 @@ class UpdateRequest extends FormRequest
             'buy_spread' => ['required','numeric',new NoHtmlInjection],
             'sell_spread' => ['required','numeric',new NoHtmlInjection],
             'disabled' =>['required','in:1,0'],
+            'sort_order' => ['nullable','integer','min:0'],
         ];
     }
 

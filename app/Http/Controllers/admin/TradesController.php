@@ -171,11 +171,9 @@ class TradesController extends Controller
             }
         } else {
             if ($trade->result === 1) {
-                $user->userInfo->balance = $user->userInfo->balance + $trade->profit;
-                $user->save();
+                $this->tradeAddBalance($user, $trade->profit, 'Trade profit');
             } else {
-                $user->userInfo->balance = $user->userInfo->balance - $trade->profit;
-                $user->save();
+                $this->tradeMinusBalance($user, $trade->profit, 'Trade loss');
             }
         }
 
@@ -314,10 +312,10 @@ class TradesController extends Controller
             'amount' => 'required|numeric|gt:0',
             'coinId' => 'required',
             'type' => 'required',
-            'is_take_profit' => 'required',
-            'is_stop_loss' => 'required',
-            'stop_loss' => 'required',
-            'take_profit' => 'required',
+            // 'is_take_profit' => 'required',
+            // 'is_stop_loss' => 'required',
+            // 'stop_loss' => 'required',
+            // 'take_profit' => 'required',
             'duration' => 'required|numeric|gt:0',
         ]);
         $data = [];

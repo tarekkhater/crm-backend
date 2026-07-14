@@ -191,7 +191,11 @@ class PackagesController extends Controller
 
         if ($data['status'] == 'approved') {
             if ($wd->approved < 1) {
-                $user->userInfo->balance = $user->aBalance() - $wd->amount;
+                $user->load('userInfo');
+                if (!$user->userInfo || !\App\Services\Users\UserWalletService::applyDebit($user->userInfo, (float) $wd->amount)) {
+                    return redirect()->back()->with('failure', 'Insufficient balance for withdrawal');
+                }
+                $user->userInfo->save();
             }
             $wd->approved = 1;
         }elseif ($data['status'] == 'declined') {

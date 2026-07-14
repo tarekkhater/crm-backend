@@ -1,4 +1,4 @@
-@extends('mails.layouts.app')
+﻿@extends('mails.layouts.app')
 @section('main-content') 
       <table width="100%" cellpadding="0" cellspacing="0" dir="ltr">
         <tr>
@@ -8,9 +8,9 @@
 text-align: left;
 width: 90%;
 margin-top: 15px;
-background-color: #d1eae3;
+background-color: {{ config('email-branding.colors.highlight_bg') }};
     padding: 10px;
-    border: 1px solid #d1eae3;
+    border: 1px solid {{ config('email-branding.colors.highlight_bg') }};
 border-radius: 5px;
 ">
                 <div style="color:rgb(0, 0, 0);font-size: 22px;font-weight: 400;line-height: 21.78px;">
@@ -20,13 +20,13 @@ border-radius: 5px;
               </div>
               <main style="text-align : start; padding-left : 20px; padding-left : 20px;">
                 <div class="my-8 grid grid-cols-1 gap-6" style="text-align:left">
-                  <p style="color:#011610;    font-size: 22px;
+                  <p style="color:{{ config('email-branding.colors.text') }};    font-size: 22px;
     font-weight: 400;">
                     Witaj <b
-                      style="color:#037353;font-weight : 700;font-size: 18px;line-height: 21.78px;font-family: system-ui;">{{$data['user']->name}} {{$data['user']->surname}}.</b>
+                      style="color:{{ config('email-branding.colors.accent') }};font-weight : 700;font-size: 18px;line-height: 21.78px;font-family: system-ui;">{{$data['user']->name}} {{$data['user']->surname}}.</b>
                   </p>
-                  <p style="margin-top : 10px;color:#011610;    font-size: 22px;
-    font-weight: 500;" class="text-[#242052CC]">Otrzymaliśmy prośbę o zresetowanie hasła do Twojego konta quantumprime.<br/> Skorzystaj z poniższego kodu, aby ustawić nowe hasło:
+                  <p style="margin-top : 10px;color:{{ config('email-branding.colors.text') }};    font-size: 22px;
+    font-weight: 500;" class="text-[#242052CC]">Otrzymaliśmy prośbę o zresetowanie hasła do Twojego konta Paradox Investing.<br/> Skorzystaj z poniższego kodu, aby ustawić nowe hasło:
               </main>
             </section>
           </td>
@@ -37,7 +37,7 @@ border-radius: 5px;
         <tr>
           <t style="text-align:center;">
 
-            <p style="font-weight : 700;font-size: 37px;line-height: 21.78px;text-align:center;color:#037353;   
+            <p style="font-weight : 700;font-size: 37px;line-height: 21.78px;text-align:center;color:{{ config('email-branding.colors.accent') }};   
 padding: 10px;
 ;
 ">
@@ -50,7 +50,7 @@ padding: 10px;
       </table>
       <table width="100%" cellpadding="0" cellspacing="0" dir="ltr" style="justify-self: anchor-center;">
         <tr>
-          <td style="font-family: system-ui;color:#011610;width:100%;text-align:left;">
+          <td style="font-family: system-ui;color:{{ config('email-branding.colors.text') }};width:100%;text-align:left;">
             <b>Rozpocznij w trzech prostych krokach:</b>
           </td>
         </tr>
@@ -62,13 +62,13 @@ padding: 10px;
             <img src="{{asset('Emails/lock-svg.png')}}"
               style="margin-left:4px;width: 55%;height: 80%;" alt="illustration-1" />
           </td>
-          <td style="align-content:center!important;color:#011610;text-align:left;
+          <td style="align-content:center!important;color:{{ config('email-branding.colors.text') }};text-align:left;
             font-size: 17px;direction:ltr">
             <p style="    font-size: 16px;
     font-weight: 700;
-    line-height: 26px;"><b style="font-family: system-ui;color:#037353;">Wprowadź kod </b> i przejdź na stronę resetowania hasła.
+    line-height: 26px;"><b style="font-family: system-ui;color:{{ config('email-branding.colors.accent') }};">Wprowadź kod </b> i przejdź na stronę resetowania hasła.
               <br />
-              <span style="font-family: system-ui;color:#037353;">trade.quantumprime.app</span>
+              <span style="font-family: system-ui;color:{{ config('email-branding.colors.accent') }};">trade.Paradox Investing.app</span>
             </p>
 
           </td>
@@ -80,11 +80,11 @@ padding: 10px;
             <img src="{{asset('Emails/codes-svg.png')}}"
               style="margin-left:4px;width: 55%;height: 80%;" alt="illustration-1" />
           </td>
-          <td style="align-content:center!important;color:#011610;text-align:left;
+          <td style="align-content:center!important;color:{{ config('email-branding.colors.text') }};text-align:left;
             font-size: 17px;direction:ltr">
             <p style="    font-size: 16px;
     font-weight: 700;
-    line-height: 26px;"><b style="font-family: system-ui;color:#037353;">Wprowadź kod </b> podany powyżej.</p>
+    line-height: 26px;"><b style="font-family: system-ui;color:{{ config('email-branding.colors.accent') }};">Wprowadź kod </b> podany powyżej.</p>
 
           </td>
           
@@ -95,11 +95,11 @@ padding: 10px;
             <img src="{{asset('Emails/passwords-svg.png')}}"
               style="margin-left:4px;width: 55%;height: 80%;" alt="illustration-1" />
           </td>
-          <td style="align-content:center!important;color:#011610;text-align:left; 
+          <td style="align-content:center!important;color:{{ config('email-branding.colors.text') }};text-align:left; 
             font-size: 17px;direction:ltr">
             <p style="    font-size: 16px;
     font-weight: 700;
-    line-height: 26px;"><b style="font-family: system-ui;color:#037353;">Utwórz nowe hasło</b> i postępuj zgodnie z instrukcjami, aby
+    line-height: 26px;"><b style="font-family: system-ui;color:{{ config('email-branding.colors.accent') }};">Utwórz nowe hasło</b> i postępuj zgodnie z instrukcjami, aby
               <br />
               ustawić nowe hasło.
             </p>

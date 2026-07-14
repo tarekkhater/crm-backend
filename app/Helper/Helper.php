@@ -120,33 +120,138 @@ if (!function_exists('sendMessage')) {
         Message::create($data);
     }
 }
+if (!function_exists('getTeamLeaderManagedAgentIds')) {
+    /**
+     * Admin IDs of agents managed by a team leader.
+     * Uses UserManager (type 0 = TL-created, type 1 = conversion/retention-created)
+     * and Admin.manager_id as fallback for legacy rows.
+     */
+    function getTeamLeaderManagedAgentIds($admin = null)
+    {
+        $admin = $admin ?? auth()->user();
+        if (!$admin) {
+            return collect([]);
+        }
+
+        $fromUserManager = UserManager::where('admin_id', $admin->id)
+            ->whereIn('type', ['0', '1'])
+            ->pluck('user_id');
+
+        $fromManagerId = Admin::withoutGlobalScopes()
+            ->where('manager_id', $admin->id)
+            ->whereNull('deleted_at')
+            ->pluck('id');
+
+        return $fromUserManager->merge($fromManagerId)->unique()->values();
+    }
+}
+
+if (!function_exists('getTeamLeaderVisibleAgentIds')) {
+    /**
+     * Agent admin IDs a team leader may access:
+     * direct reports (UserManager / manager_id) plus agents on the same desk
+     * in the same department (conversion TL → type_id 7, retention TL → type_id 8).
+     */
+    function getTeamLeaderVisibleAgentIds($admin = null)
+    {
+        $admin = $admin ?? auth()->user();
+        if (!$admin) {
+            return collect([]);
+        }
+
+        $ids = getTeamLeaderManagedAgentIds($admin);
+
+        if (!empty($admin->desk_id)) {
+            $query = Admin::withoutGlobalScopes()
+                ->where('desk_id', $admin->desk_id)
+                ->whereIn('type_id', [7, 8])
+                ->whereNull('deleted_at');
+
+            if ((int) $admin->sub_type_id === 7) {
+                $query->where('type_id', 7);
+            } elseif ((int) $admin->sub_type_id === 8) {
+                $query->where('type_id', 8);
+            }
+
+            $ids = $ids->merge($query->pluck('id'))->unique()->values();
+        }
+
+        return $ids;
+    }
+}
+
 if (!function_exists('getUsersIds')) {
     function getUsersIds()
     {
         $ids = [];
-        if (auth()->user()->type_id == 3) {
-            if(auth()->user()->sub_type_id == 4){
-                $idss = Admin::where('desk_id',auth()->user()->desk_id)->pluck('id');  
-                $ids = AssignUserManager::whereIn('admin_id', $idss)->pluck('user_id');
-            }else{
-                $ids = User::select()->pluck('id');
+        $admin = auth()->user();
+
+        if ($admin->type_id == 3) {
+            // Desk-scoped if: sub_type_id=4 OR has a desk_id assigned.
+            // Super admin only if: sub_type_id≠4 AND no desk_id.
+            $isDeskScoped = ($admin->sub_type_id == 4) || !empty($admin->desk_id);
+
+            if ($isDeskScoped && $admin->desk_id) {
+                // withoutGlobalScopes() prevents recursive scope application loop.
+                $deskAdminIds = Admin::withoutGlobalScopes()
+                    ->where('desk_id', $admin->desk_id)
+                    ->whereNull('deleted_at')
+                    ->pluck('id');
+                $assignedIds = AssignUserManager::whereIn('admin_id', $deskAdminIds)->pluck('user_id');
+                $deskRegIds  = User::where('registration_desk_id', $admin->desk_id)->pluck('id');
+                $ids = $assignedIds->merge($deskRegIds)->unique()->values();
+            } else {
+                // Super admin (no desk assigned): sees all users
+                $ids = User::pluck('id');
             }
-        } else if (auth()->user()->type_id == 5) {
-            $ids = User::where('broker_id', auth()->user()->id)->pluck('id');
-            // $ids = IBClient::where('ib_id',auth()->user()->id)->pluck('user_id');
-        } else if (auth()->user()->type_id == 4) {
-            $ids = AssignUserManager::where('admin_id', auth()->user()->id)->pluck('user_id');
-        } else if (auth()->user()->type_id == 6) {
-            $idss = Admin::where('manager_id',auth()->user()->id)->pluck('id');
-            $ids = AssignUserManager::whereIn('admin_id',$idss)->OrWhere('admin_id',auth()->user()->id)->pluck('user_id');
+        } elseif ($admin->type_id == 5) {
+            // Broker: users tagged with this broker + desk-registered users if broker has a desk
+            $brokerIds = User::where('broker_id', $admin->id)->pluck('id');
+            if ($admin->desk_id) {
+                $deskRegIds = User::where('registration_desk_id', $admin->desk_id)->pluck('id');
+                $ids = $brokerIds->merge($deskRegIds)->unique()->values();
+            } else {
+                $ids = $brokerIds;
+            }
+        } elseif ($admin->type_id == 4) {
+            $ids = AssignUserManager::where('admin_id', $admin->id)->pluck('user_id');
+        } elseif ($admin->type_id == 6) {
+            // Team leader: users assigned to them or to any visible agent on their desk
+            $agentIds = getTeamLeaderVisibleAgentIds($admin);
+            $ids = AssignUserManager::where(function ($q) use ($agentIds, $admin) {
+                $q->whereIn('admin_id', $agentIds)
+                  ->orWhere('admin_id', $admin->id);
+            })->pluck('user_id');
         } else {
-            if (auth()->user()->type_id == 7) {
-$ids = AssignUserManager::where('admin_id', auth()->user()->id)->pluck('user_id');
-} else {
-                $ids = AssignUserManager::where('admin_id', auth()->user()->id)->pluck('user_id');
-            }
+            // Conversion (7) / Retention (8) agent: only own assigned users
+            $ids = AssignUserManager::where('admin_id', $admin->id)->pluck('user_id');
         }
-        return  $ids;
+
+        return $ids;
+    }
+}
+
+if (!function_exists('getCrmLeadVisibilityUserIds')) {
+    /**
+     * User IDs visible in CRM leads list: same as getUsersIds(), plus ALL users
+     * (leads type_id=1 and customers type_id=2) registered via this admin's desk
+     * signup link even if not yet assigned to an agent.
+     */
+    function getCrmLeadVisibilityUserIds()
+    {
+        $base = getUsersIds();
+        $ids = $base instanceof \Illuminate\Support\Collection ? $base->all() : (array) $base;
+
+        $admin = auth()->user();
+        if ($admin && $admin->desk_id) {
+            $deskPool = User::query()
+                ->where('registration_desk_id', $admin->desk_id)
+                ->pluck('id')
+                ->all();
+            $ids = array_values(array_unique(array_merge($ids, $deskPool)));
+        }
+
+        return $ids;
     }
 }
 
@@ -154,17 +259,34 @@ $ids = AssignUserManager::where('admin_id', auth()->user()->id)->pluck('user_id'
 if (!function_exists('getTeamLeaderIds')) {
     function getTeamLeaderIds()
     {
-        if (auth()->user()->type_id == 5) {
-            $ids = Admin::where('broker_id', auth()->user()->id)->pluck('id');
+        $admin = auth()->user();
+
+        if ($admin->type_id == 5) {
+            $ids = Admin::withoutGlobalScopes()
+                ->where('broker_id', $admin->id)
+                ->whereNull('deleted_at')
+                ->pluck('id');
+
+        } elseif ($admin->type_id == 3) {
+            $isDeskScoped = ($admin->sub_type_id == 4) || !empty($admin->desk_id);
+            if ($isDeskScoped && $admin->desk_id) {
+                $ids = Admin::withoutGlobalScopes()
+                    ->where('desk_id', $admin->desk_id)
+                    ->whereNull('deleted_at')
+                    ->pluck('id');
+            } else {
+                $ids = Admin::withoutGlobalScopes()->whereNull('deleted_at')->pluck('id');
+            }
+
+        } elseif ($admin->type_id == 6) {
+            $ids = getTeamLeaderVisibleAgentIds($admin)->push($admin->id)->unique()->values();
+
         } else {
-             if (auth()->user()->type_id == 3 && auth()->user()->sub_type_id == 4) {
-                 $ids = Admin::select('id', 'name')->where('desk_id',auth()->user()->desk_id)->pluck('id');
-             }else{
-                 $ids = Admin::select('id', 'name')->pluck('id');
-             }
-            
+            // Agent (7/8): only themselves
+            $ids = collect([$admin->id]);
         }
-        return  $ids;
+
+        return $ids;
     }
 }
 
@@ -173,19 +295,31 @@ if (!function_exists('getAgentsIds')) {
     function getAgentsIds()
     {
         $ids = [];
-        if (auth()->user()->type_id == 3) {
-            if(auth()->user()->sub_type_id == 4){
-                $ids = Admin::where('desk_id',auth()->user()->desk_id)->pluck('id');   
-            }else{
-                $ids = Admin::select()->pluck('id');   
+        $admin = auth()->user();
+
+        if ($admin->type_id == 3) {
+            $isDeskScoped = ($admin->sub_type_id == 4) || !empty($admin->desk_id);
+            if ($isDeskScoped && $admin->desk_id) {
+                $ids = Admin::withoutGlobalScopes()
+                    ->where('desk_id', $admin->desk_id)
+                    ->whereNull('deleted_at')
+                    ->pluck('id');
+            } else {
+                $ids = Admin::withoutGlobalScopes()->whereNull('deleted_at')->pluck('id');
             }
-        } else if (auth()->user()->type_id == 5) {
-            $idsTeamLeader = Admin::where('broker_id', auth()->user()->id)->whereIn('type_id', [7, 8])->pluck('id');
-            $ids = UserManager::where('admin_id', $idsTeamLeader)->where('type', '0')->pluck('user_id');
-        } else if (auth()->user()->type_id == 6) {
-            $ids = UserManager::where('admin_id', auth()->user()->id)->where('type', '0')->pluck('user_id');
+        } elseif ($admin->type_id == 5) {
+            $ids = Admin::withoutGlobalScopes()
+                ->where('broker_id', $admin->id)
+                ->whereNull('deleted_at')
+                ->pluck('id');
+        } elseif ($admin->type_id == 6) {
+            $ids = getTeamLeaderVisibleAgentIds($admin);
+        } elseif (in_array((int) $admin->type_id, [7, 8], true)) {
+            // Conversion / retention agent: only themselves
+            $ids = collect([$admin->id]);
         }
-        return  $ids;
+
+        return $ids;
     }
 }
 

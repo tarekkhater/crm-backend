@@ -17,6 +17,7 @@ use App\Models\Trade;
 use App\Models\Favourite;
 use App\Models\Withdrawal;
 use App\Models\Position;
+use App\Services\Users\UserWalletService;
 class IndexController extends Controller
 {
 
@@ -28,6 +29,7 @@ class IndexController extends Controller
         
          $data= $user->toArray();
                 $base_url=baseUrl();
+        $mainBal = UserWalletService::mainBalance($user->userInfo);
 
         $resilt = [
             'id'=>$data["id"],
@@ -50,13 +52,14 @@ class IndexController extends Controller
             'plan'=>'stander',
             'join_at'=>date('Y M d',strtotime($data["created_at"])),
             'document'=>count($data["identity"]) > 0 ?true:false,
+            'ai_trading'=>($data['ai_trading'] ?? '0') == '1',
 
         ];
 
         $resilt['money'] = [
-                'total'=>$data['user_info']['balance'],
-                'balance'=>$data['user_info']['balance'],
-                'trading_balance'=>$data['user_info']['balance'],
+                'total'=>$mainBal,
+                'balance'=>$mainBal,
+                'trading_balance'=>$mainBal,
                 'pnl'=>round(Position::where('user_id',$user->id)->where('close_at','<>',null)->sum('net_profit'),2),
                 'bouns'=>Deposit::where('user_id',$data['id'])->where('type','bonus')->sum('amount'),
             ];  
@@ -78,14 +81,15 @@ class IndexController extends Controller
         $withdrawal = Withdrawal::where('user_id',$user->id)->sum('amount');
         $user->load(['userInfo','transactions','wireAccounts','trades']);
          $data= $user->toArray();
+        $mainBal = UserWalletService::mainBalance($user->userInfo);
         $resilt = [
                 [
                 'title'=>"Total",
-                "value"=> $data['user_info']["balance"]+$data['user_info']["pnl"]+$data['user_info']["bonus"]
+                "value"=> $mainBal + (float) ($data['user_info']["pnl"] ?? 0)
                 ],
                 [
                 'title'=>"Estimated Balance",
-                "value"=>$data['user_info']["balance"]
+                "value"=>$mainBal
                 ],
                 [
                 'title'=>"BNL Balance",
@@ -110,6 +114,21 @@ class IndexController extends Controller
 
         $this->setData($resilt);
         $this->setMessage("success");
+        return $this->sendApiResonse();
+    }
+
+    public function aiTrading(Request $request)
+    {
+        $request->validate([
+            'ai_trading' => ['required', 'boolean'],
+        ]);
+
+        $user = AuthApi();
+        $user->ai_trading = $request->boolean('ai_trading') ? '1' : '0';
+        $user->save();
+
+        $this->setData(['ai_trading' => $user->ai_trading == '1']);
+        $this->setMessage('success');
         return $this->sendApiResonse();
     }
 

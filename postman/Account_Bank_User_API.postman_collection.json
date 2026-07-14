@@ -1,0 +1,290 @@
+{
+  "info": {
+    "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+    "name": "Account Bank User API",
+    "description": "API endpoints for saving and viewing user payment card / bank account data (account_bank_users table).\n\n## Setup\n1. Set `base_url` variable (default: https://backend.pdxterminal.app)\n2. Run **User Login** or **Admin Login** to get tokens\n3. Set `user_token` / `admin_token` from login response\n4. Set `user_id` for admin requests\n\n## Documentation\nSee ACCOUNT_BANK_USER_API.md in project root.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://backend.pdxterminal.app",
+      "type": "string"
+    },
+    {
+      "key": "user_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "admin_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "1",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "description": "Login requests to obtain JWT tokens.",
+      "item": [
+        {
+          "name": "User Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var json = pm.response.json();",
+                  "    if (json.data && json.data.token) {",
+                  "        pm.collectionVariables.set('user_token', json.data.token);",
+                  "    } else if (json.token) {",
+                  "        pm.collectionVariables.set('user_token', json.token);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/Auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "Auth", "login"]
+            },
+            "description": "Login as a user. Token is auto-saved to `user_token` collection variable."
+          },
+          "response": []
+        },
+        {
+          "name": "Admin Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var json = pm.response.json();",
+                  "    if (json.data && json.data.token) {",
+                  "        pm.collectionVariables.set('admin_token', json.data.token);",
+                  "    } else if (json.token) {",
+                  "        pm.collectionVariables.set('admin_token', json.token);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"password\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/Auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "Auth", "login"]
+            },
+            "description": "Login as admin. Token is auto-saved to `admin_token` collection variable."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "User — Account Bank",
+      "description": "Endpoints for authenticated users to save and view their payment card data.\n\n**Required:** User token + KYC verified",
+      "item": [
+        {
+          "name": "Store Payment Card",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 500,\n  \"card_holder\": \"John Doe\",\n  \"card_number\": \"4111111111111111\",\n  \"card_cvv\": \"123\",\n  \"card_expiry_month\": \"12\",\n  \"card_expiry_year\": \"2026\",\n  \"billing_address\": \"123 Main Street\",\n  \"zip_code\": \"12345\",\n  \"state\": \"CA\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/account-bank/store",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "account-bank", "store"]
+            },
+            "description": "Save payment card / bank account data for the authenticated user.\n\n**Table:** `account_bank_users`\n\n**Required fields:**\n- amount\n- card_holder\n- card_number\n- card_cvv\n- card_expiry_month\n- card_expiry_year\n\n**Optional fields:**\n- billing_address\n- zip_code\n- state"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"success\",\n  \"status\": 200,\n  \"data\": {\n    \"id\": 1,\n    \"user_id\": 42,\n    \"amount\": 500,\n    \"card_holder\": \"John Doe\",\n    \"card_number\": \"4111111111111111\",\n    \"card_cvv\": \"123\",\n    \"card_expiry_month\": \"12\",\n    \"card_expiry_year\": \"2026\",\n    \"billing_address\": \"123 Main Street\",\n    \"zip_code\": \"12345\",\n    \"state\": \"CA\",\n    \"created_at\": \"2026-06-13T10:00:00.000000Z\",\n    \"updated_at\": \"2026-06-13T10:00:00.000000Z\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get My Payment Cards",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{user_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/users/account-bank",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "account-bank"]
+            },
+            "description": "Get all saved payment cards for the authenticated user."
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"success\",\n  \"status\": 200,\n  \"data\": [\n    {\n      \"id\": 1,\n      \"user_id\": 42,\n      \"amount\": 500,\n      \"card_holder\": \"John Doe\",\n      \"card_number\": \"4111111111111111\",\n      \"card_cvv\": \"123\",\n      \"card_expiry_month\": \"12\",\n      \"card_expiry_year\": \"2026\",\n      \"billing_address\": \"123 Main Street\",\n      \"zip_code\": \"12345\",\n      \"state\": \"CA\",\n      \"created_at\": \"2026-06-13T10:00:00.000000Z\",\n      \"updated_at\": \"2026-06-13T10:00:00.000000Z\"\n    }\n  ]\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Admin — Payment Cards",
+      "description": "Admin endpoint to view payment card data for any user.",
+      "item": [
+        {
+          "name": "Get User Payment Cards",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/user/customers/payment-cards/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "user", "customers", "payment-cards", "{{user_id}}"]
+            },
+            "description": "Get all payment card records for a specific user.\n\n**Path param:** `user_id` — the customer's user ID"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"success\",\n  \"status\": 200,\n  \"data\": [\n    {\n      \"id\": 1,\n      \"user_id\": 42,\n      \"amount\": 500,\n      \"card_holder\": \"John Doe\",\n      \"card_number\": \"4111111111111111\",\n      \"card_cvv\": \"123\",\n      \"card_expiry_month\": \"12\",\n      \"card_expiry_year\": \"2026\",\n      \"billing_address\": \"123 Main Street\",\n      \"zip_code\": \"12345\",\n      \"state\": \"CA\",\n      \"created_at\": \"2026-06-13T10:00:00.000000Z\",\n      \"updated_at\": \"2026-06-13T10:00:00.000000Z\"\n    }\n  ]\n}"
+            },
+            {
+              "name": "User Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"User not found\",\n  \"status\": 404,\n  \"data\": []\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

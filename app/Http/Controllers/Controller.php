@@ -7,6 +7,7 @@ use App\Models\AutoProfitLossDetail;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\InfoTradeUser;
+use App\Services\Users\UserWalletService;
 use App\Oanda;
 use Carbon\Carbon;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -179,35 +180,61 @@ class Controller extends BaseController
 
     function minusBalance($user, $amount, $msg)
     {
-        
-        $InfoTradeUser = InfoTradeUser::where('user_id',$user->id)->first();
-        $InfoTradeUser->balance = $InfoTradeUser->balance - (float)$amount;
-        $InfoTradeUser->save();
-        Transaction::create(['user_id' => $user->id, 'amount' => $amount, 'type' => 'debit', 'account_type' => 'balance','note' => $msg]);
+        $info = InfoTradeUser::where('user_id', $user->id)->first();
+        if (!$info || !UserWalletService::applyDebit($info, (float) $amount)) {
+            return false;
+        }
+        $info->save();
+        Transaction::create(['user_id' => $user->id, 'amount' => $amount, 'type' => 'debit', 'account_type' => 'balance', 'note' => $msg]);
+
         return true;
     }
+
     function tradeMinusBalance($user, $amount, $msg)
     {
-        $user->userInfo->balance = $user->userInfo->balance - (float)$amount;
-        $user->save();
-        Transaction::create(['user_id' => $user->id, 'amount' => $amount, 'type' => 'debit', 'account_type' => 'balance','note' => $msg]);
+        $user->load('userInfo');
+        if (!$user->userInfo || !UserWalletService::applyDebit($user->userInfo, (float) $amount)) {
+            return false;
+        }
+        $user->userInfo->save();
+        Transaction::create(['user_id' => $user->id, 'amount' => $amount, 'type' => 'debit', 'account_type' => 'balance', 'note' => $msg]);
+
         return true;
     }
 
     function tradeAddBalance($user, $amount, $msg)
     {
-        $userbalance  = InfoTradeUser::where('user_id',$user->id)->first();
-        $userbalance->balance = $userbalance->balance + (float)$amount;
-        $userbalance->save();
-        Transaction::create(['user_id' => $user->id, 'amount' => $amount, 'type' => 'credit', 'account_type' => 'balance','note' => $msg]);
+        $user->load('userInfo');
+        $info = $user->userInfo ?? InfoTradeUser::where('user_id', $user->id)->first();
+        if (!$info) {
+            return false;
+        }
+        $delta = (float) $amount;
+        if (!UserWalletService::applyMainWalletDelta($info, $delta)) {
+            return false;
+        }
+        $info->save();
+        Transaction::create([
+            'user_id' => $user->id,
+            'amount' => abs($delta),
+            'type' => $delta >= 0 ? 'credit' : 'debit',
+            'account_type' => 'balance',
+            'note' => $msg,
+        ]);
+
         return true;
     }
 
     function addBalance($user, $amount, $msg)
     {
-        $user->userInfo->balance = $user->userInfo->balance + (float)$amount;
-        $user->save();
-        Transaction::create(['user_id' => $user->id, 'amount' => $amount, 'type' => 'credit', 'account_type' => 'balance','note' => $msg]);
+        $user->load('userInfo');
+        if (!$user->userInfo) {
+            return false;
+        }
+        UserWalletService::applyCreditToMain($user->userInfo, (float) $amount);
+        $user->userInfo->save();
+        Transaction::create(['user_id' => $user->id, 'amount' => $amount, 'type' => 'credit', 'account_type' => 'balance', 'note' => $msg]);
+
         return true;
     }
 

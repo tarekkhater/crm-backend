@@ -59,10 +59,8 @@ class indexController extends Controller
             'amount' => 'required|numeric',
             'spread' => 'required|numeric',
             'leverage' => 'required|integer',
-            'stop_loss' => 'nullable|boolean',
-            'take_profit' => 'nullable|boolean',
-            'stop_loss_price' => 'nullable|numeric',
-            'take_profit_price' => 'nullable|numeric',
+            'stop_loss' => 'nullable|numeric|min:0',
+            'take_profit' => 'nullable|numeric|min:0',
         ]);
         
          $data['user_id'] = AuthApi()->id;
@@ -464,7 +462,7 @@ class indexController extends Controller
         $total_trades = Trade::whereStatus(0)->whereUserId($user_id)->sum('traded_amount');
         $com = Trade::whereStatus(0)->whereUserId($user_id)->sum('paid_com');
         $profit = $pnl - ($com);
-        $bal = $this->user->userInfo->balance;
+        $bal = \App\Services\Users\UserWalletService::mainBalance($this->user->userInfo);
         //margin=  total trades;
         //equity == 0
         // $equity = bal+mr+pnl
@@ -482,7 +480,7 @@ class indexController extends Controller
     
     public function getBalance()
     {
-        return $this->user->userInfo->balance;
+        return \App\Services\Users\UserWalletService::mainBalance($this->user->userInfo);
     }
 
 
@@ -605,11 +603,8 @@ if($coinPrice === 0){
 
             if ($trade->trade_type == 'Sell') {
                 if ($trade->opening_price < $coinPrice) {
-                    $infouser->balance +=  $pl;
-                    $infouser->save();
                     $msg = 'Traded  ' . optional($trade->currency)->name . ' lost';
                     $amt = $pl;
-                    // $amt = ($pl);
                     $this->tradeAddBalance($user, $amt, $msg);
                     $this->updateTradeProfit($id);
                     $trade->result = 2;
@@ -617,8 +612,6 @@ if($coinPrice === 0){
                     $trade->save();
                     return 2;
                 } else if ($trade->opening_price > $coinPrice) {
-                    $infouser->balance += $pl;
-                    $infouser->save();
                     $msg = 'Traded  ' . optional($trade->currency)->name . ' won';
                     $amt = $pl;
                     $this->tradeAddBalance($user, $amt, $msg);
@@ -628,8 +621,6 @@ if($coinPrice === 0){
                     $trade->save();
                     return 1;
                 } else{
-                    $infouser->balance +=  $pl;
-                     $infouser->save();
                     $msg = 'Traded  ' . optional($trade->currency)->name . ' Draw';
                     // $amt = $pl;
                     // $this->tradeAddBalance($user, $amt, $msg);
@@ -747,7 +738,8 @@ return "4";
         $pnl = $this->calcPnl($trades);
         $total_trades = Position::where('close_at',null)->whereUserId($this->user->id)->sum('trade_amount');
         $profit = $pnl;
-        $bal = $this->user->userInfo->balance;
+        \App\Services\Users\UserWalletService::ensureSynced($this->user->userInfo);
+        $bal = \App\Services\Users\UserWalletService::mainBalance($this->user->userInfo);
         $equity = ($profit) + $bal;
         $total_deposit = $this->user->userInfo->awaiting_deposit;
          $trades = $this->seviceTrade->index([auth()->user()->id]);

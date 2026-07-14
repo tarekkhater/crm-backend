@@ -226,7 +226,11 @@ class certificationController extends Controller
             
             $user = User::find($certificate->user_id);
             $user->load("userInfo");
-            $user->userInfo->balance = (int)$user->userInfo->balance - (int)$certificate->certificate->amount;
+            if (!\App\Services\Users\UserWalletService::applyDebit($user->userInfo, (float) $certificate->certificate->amount)) {
+                $this->setStatus(422);
+                $this->setMessage('Insufficient balance');
+                return $this->sendApiResonse();
+            }
             $user->userInfo->save();
         
         }else{

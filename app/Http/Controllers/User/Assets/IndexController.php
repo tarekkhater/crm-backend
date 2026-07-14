@@ -94,7 +94,10 @@ class IndexController extends Controller
     public function searchByName(Request $request)
 {
     
-    $query = CurrencyPair::where('name', 'like', '%' . $request->name . '%')->where('type',"$request->type")->get();
+    $query = CurrencyPair::where('name', 'like', '%' . $request->name . '%')
+        ->where('type', "$request->type")
+        ->orderedForDisplay()
+        ->get();
 
     // Prepare and set response data
     $this->setData(AssetsResource::make($query));
@@ -159,7 +162,7 @@ class IndexController extends Controller
             // }else{
             //     $dataar = ['crypto'];
             // }
-            $currency_pairs = CurrencyPair::where('type',"$request->type")->get();
+            $currency_pairs = CurrencyPair::where('type', "$request->type")->orderedForDisplay()->get();
             $this->setData(AssetsResource::make($currency_pairs));
             $this->setMessage("success");
             return $this->sendApiResonse();
@@ -168,7 +171,7 @@ class IndexController extends Controller
     }
 
     public function getAssetsByType(Request $request){
-            $currency_pairs = CurrencyPair::where('type',$request->type)->get();
+            $currency_pairs = CurrencyPair::where('type', $request->type)->orderedForDisplay()->get();
             $this->setData(AssetsResource::make($currency_pairs));
             $this->setMessage("success");
             return $this->sendApiResonse();
@@ -218,7 +221,7 @@ class IndexController extends Controller
 
     public function getFavourite(){
         $currency_pair_id = Favourite::where('user_id',$this->user->id)->pluck('asset_id');
-        $currency_pairs = CurrencyPair::whereIn('id',$currency_pair_id)->get();
+        $currency_pairs = CurrencyPair::whereIn('id', $currency_pair_id)->orderedForDisplay()->get();
         $this->setData(AssetsResource::make($currency_pairs));
         $this->setMessage("success");
         return $this->sendApiResonse();

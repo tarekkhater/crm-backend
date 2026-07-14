@@ -5,6 +5,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CurrencyPair;
 use App\Models\Trade;
 use App\Models\Position;
+use App\Services\Users\UserWalletService;
 use App\Models\Favourite;
 use App\Http\Resources\PositionResource;
 use App\Services\TradeService;
@@ -47,7 +48,8 @@ class indexController extends Controller
         $total_trades = Position::where('close_at',null)->whereUserId($user_id)->sum('trade_amount');
         $com = Trade::whereStatus(0)->whereUserId($user_id)->sum('paid_com');
         $profit = $pnl;
-        $bal = $this->user->userInfo->balance;
+        UserWalletService::ensureSynced($this->user->userInfo);
+        $bal = UserWalletService::mainBalance($this->user->userInfo);
         $equity = ($profit) + $bal;
         $total_deposit = $this->user->userInfo->awaiting_deposit;
         $data = [

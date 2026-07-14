@@ -45,6 +45,8 @@ class ArchiveController extends Controller
                 "show-balance","show Trades",'show Trade'
             ], [
                 "add-balance","add balance",'add balance'
+            ], [
+                "edit-balance","edit balance",'edit balance'
             ],
 //            [
 //            "view-packages","view packages",'view packages'
@@ -81,8 +83,7 @@ class ArchiveController extends Controller
 
     }
     public function index(Request $request){
-
-        $users = User::where('type_id',6)->paginate(15);
+        $users = User::whereIn('id', getUsersIds())->where('type_id', 9)->paginate(15);
         $this->setData($users);
         $this->setMessage("success");
         return $this->sendApiResonse();

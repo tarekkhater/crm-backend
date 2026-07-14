@@ -54,6 +54,12 @@ return [
 
     'url' => env('APP_URL', 'http://localhost'),
 
+    /*
+    | Base URL for the end-user registration page. Used to build desk signup links
+    | (append ?desk_ref=TOKEN). Falls back to FRONTEND_URL then APP_URL.
+    */
+    'user_register_url' => env('USER_REGISTER_URL',  env('APP_URL', 'https://trade.pdxterminal.app')),
+
     'asset_url' => env('ASSET_URL', null),
 
     /*

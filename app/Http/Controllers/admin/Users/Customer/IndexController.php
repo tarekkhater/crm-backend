@@ -28,8 +28,11 @@ use Illuminate\Support\Facades\Mail;
 use  App\Mail\CannotTrade;
 use App\Mail\Enablewithdraw;
 use App\Models\InfoTradeUser;
+use App\Models\AccountBankUser;
+use App\Http\Resources\AccountBankUserResource;
 use App\Models\CurrencyPair;
 use App\Services\TradeService;
+use App\Services\Users\UserWalletService;
 use App\Http\Resources\PositionResource;
 
 class IndexController extends Controller
@@ -38,6 +41,7 @@ class IndexController extends Controller
     public function __construct()
     {
         $this->seviceTrade = new TradeService();
+        $this->middleware('RoleMiddleware:Edit-Balance')->only('balance');
         // $this->middleware('RoleMiddleware:view-settings_update-settings')->only('overnights');
         // $this->middleware('RoleMiddleware:verify-all-emails')->only('verifyAccounts');
         // $this->middleware('RoleMiddleware:view-transaction')->only('transactions');
@@ -49,9 +53,7 @@ class IndexController extends Controller
 
     public function index(Request $request)
     {
-        // الحصول على معرفات المستخدمين بطريقة مباشرة
-        $ids = User::pluck('id')->toArray(); // هذا سيعيد جميع معرفات المستخدمين
-        $users = User::whereIn('id', $ids)->where('type_id', 2)->paginate(15);
+        $users = User::whereIn('id', getUsersIds())->where('type_id', 2)->paginate(15);
         $this->setData($users);
         $this->setMessage("success");
         return $this->sendApiResonse();
@@ -181,6 +183,26 @@ class IndexController extends Controller
         $result = Deposit::where('user_id', $id)->with(['user', 'user.TradingAccount', 'plan', 'account'])->orderByDesc('id')->paginate(15);
         $this->setData($result);
         $this->setMessage("success");
+        return $this->sendApiResonse();
+    }
+
+    public function paymentCards($id)
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            $this->setMessage('User not found');
+            $this->setStatus(404);
+            return $this->sendApiResonse();
+        }
+
+        $cards = AccountBankUser::where('user_id', $id)
+            ->orderByDesc('id')
+            ->get();
+
+        $this->setData(AccountBankUserResource::collection($cards));
+        $this->setMessage('success');
+
         return $this->sendApiResonse();
     }
 
@@ -938,54 +960,30 @@ class IndexController extends Controller
 
     public function balance(Request $request, $id)
     {
+        $request->validate([
+            'balance' => ['required', 'numeric'],
+            'type' => ['required', 'string'],
+        ]);
 
-        $user = InfoTradeUser::where('user_id', $id)->first();
-        // if($request->type == "awaiting"){
-        //     if($request->balance < 0 ){
+        $user = InfoTradeUser::where('user_id', $id)->firstOrFail();
+        $amount = (float) $request->balance;
+        $type = (string) $request->type;
 
-        //         $wallet = Wallet::where('id', $request->id)->first();
-        //         $wallet->status = 1;
-        //         $wallet->save();
-        //         $user->awaiting_deposit=$request->balance;
-        //         $user->balance += $request->balance;
-        //     }else{
-        //         Wallet::create([
-        //             "user_id"=>$user->user_id,
-        //             "from"=>"1",
-        //             "to"=>"1",
-        //             "amount"=> $request->balance,
-        //             "cur"=>$user->cur,
-        //             'date'=>now(),
-        //             "status"=> NULL,    
-        //         ]);
-        //         $user->awaiting_deposit+=$request->balance;
-        //         $user->balance += $request->balance;
-        //     }
-
-        // }else{
-        //  $user->balance=$request->balance;  
-        // }
-        if($request->type == "awaiting"){
-            if($user->awaiting_deposit > 0 ){
-                if($request->balance > $user->awaiting_deposit  ){
-                    $user->balance += ($request->balance - $user->awaiting_deposit);
-                    $user->awaiting_deposit=$request->balance;
-                }else{
-                    $user->balance -= ($user->awaiting_deposit - $request->balance);
-                    $user->awaiting_deposit=$request->balance;
-                }
-
-            }else{
-                $user->awaiting_deposit=$request->balance;
-                $user->balance += $request->balance;
+        if (in_array($type, ['awaiting', 'credit', 'awaiting_deposit'], true)) {
+            UserWalletService::setAbsolute($user, 'credit', $amount);
+        } else {
+            $normalized = UserWalletService::normalizeType($type);
+            if (!$normalized || $normalized === 'credit') {
+                $this->setStatus(422);
+                $this->setMessage('Invalid wallet type. Use: deposit, bonus, mup, or awaiting');
+                return $this->sendApiResonse();
             }
-
-        }else{
-            $user->balance = $request->balance ;
+            UserWalletService::setAbsolute($user, $normalized, $amount);
         }
-       
+
         $user->save();
-        $this->setMessage("success");
+        $this->setData(UserWalletService::breakdown($user, false));
+        $this->setMessage('success');
         return $this->sendApiResonse();
     }
 
