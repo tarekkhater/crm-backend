@@ -77,11 +77,11 @@ class UserWalletService
 
     public static function componentSum(InfoTradeUser $info): float
     {
-        return self::realDeposit($info) + self::bonus($info) + self::mup($info);
+        return self::realDeposit($info) + self::bonus($info) + self::mup($info) + self::credit($info);
     }
 
     /**
-     * Align real_deposit + bonus + mup with stored balance (legacy profits lived only on balance).
+     * Align real_deposit + bonus + mup + credit with stored balance (legacy profits lived only on balance).
      */
     public static function reconcileDrift(InfoTradeUser $info, bool $persist = false): bool
     {
@@ -97,6 +97,9 @@ class UserWalletService
         }
 
         if ($stored > 0.009) {
+            // Recover real_deposit from stored balance.
+            // After migration, stored always includes credit so componentSum matches — drift won't trigger.
+            // Legacy records (stored without credit): formula correctly gives real = stored - bonus - mup.
             $info->real_deposit = max(0, round($stored - self::bonus($info) - self::mup($info), 2));
         }
 
@@ -120,7 +123,7 @@ class UserWalletService
     }
 
     /**
-     * Main balance = real_deposit + bonus + mup (mirrored in balance column).
+     * Main balance = real_deposit + bonus + mup + credit (mirrored in balance column).
      */
     public static function mainBalance(?InfoTradeUser $info): float
     {
@@ -149,7 +152,7 @@ class UserWalletService
     }
 
     /**
-     * Deduct from main wallet: real_deposit → mup → bonus, then sync balance.
+     * Deduct from main wallet: real_deposit → mup → bonus → credit, then sync balance.
      */
     public static function applyDebit(InfoTradeUser $info, float $amount): bool
     {
@@ -189,6 +192,13 @@ class UserWalletService
             $fromBonus = min($bonus, $remaining);
             $info->bonus = $bonus - $fromBonus;
             $remaining -= $fromBonus;
+        }
+
+        if ($remaining > 0) {
+            $credit = self::credit($info);
+            $fromCredit = min($credit, $remaining);
+            $info->awaiting_deposit = $credit - $fromCredit;
+            $remaining -= $fromCredit;
         }
 
         self::syncBalance($info);
@@ -291,6 +301,7 @@ class UserWalletService
                 break;
             case 'credit':
                 $info->awaiting_deposit = $value;
+                self::syncBalance($info);
                 break;
         }
     }
@@ -308,13 +319,14 @@ class UserWalletService
                     } else {
                         $info->balance = number_format((float) ($info->balance ?? 0) + $amount, 2, '.', '');
                     }
-                    self::syncBalance($info);
                 } else {
                     $info->awaiting_deposit = self::credit($info) + $amount;
                 }
+                self::syncBalance($info);
                 break;
             case 'credit':
                 $info->awaiting_deposit = self::credit($info) + $amount;
+                self::syncBalance($info);
                 break;
             case 'bonus':
                 $info->bonus = self::bonus($info) + $amount;
@@ -354,7 +366,7 @@ class UserWalletService
             'balance' => $main,
             'awaiting_deposit' => $credit,
             'total' => $main,
-            'total_all_wallets' => $main + $credit,
+            'total_all_wallets' => $main,
         ];
     }
 

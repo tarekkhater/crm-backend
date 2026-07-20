@@ -19,11 +19,11 @@
 ### معادلة `balance` (للعرض والتداول)
 
 ```
-balance (main) = real_deposit + bonus + mup
+balance (main) = real_deposit + bonus + mup + credit
 ```
 
-- تعديل **Real** أو **Bonus** أو **MUP** (بأي من الـ endpointين أعلاه) → **`balance` يتغير تلقائياً**.
-- **Credit** (`awaiting_deposit`) **لا يدخل** في `balance`.
+- تعديل **أي محفظة** (Real أو Bonus أو MUP أو **Credit**) → **`balance` يتغير تلقائياً**.
+- **Credit** (`awaiting_deposit`) **يدخل في `balance`** ويمكن التداول به.
 
 ---
 
@@ -33,10 +33,12 @@ balance (main) = real_deposit + bonus + mup
 
 | `type` | Label مقترح | يؤثر على `balance`؟ | عمود DB |
 |--------|-------------|---------------------|---------|
-| `deposit` | Real Deposit | نعم (`real_deposit`) | `real_deposit` |
-| `bonus` | Bonus | نعم | `bonus` |
-| `mup` | MUP | نعم | `mup` |
-| `credit` | Credit | لا | `awaiting_deposit` |
+| `deposit` | Real Deposit | **نعم** (`real_deposit`) | `real_deposit` |
+| `bonus` | Bonus | **نعم** | `bonus` |
+| `mup` | MUP | **نعم** | `mup` |
+| `credit` | Credit | **نعم** | `awaiting_deposit` |
+
+> **Credit أصبح جزءاً من رصيد التداول.** ترتيب الخصم عند الخسارة: `real_deposit` → `mup` → `bonus` → `credit`
 
 **Aliases مقبولة من الباكند (لا تعرضها للمستخدم):**  
 `fake`→`mup` · `bouns`→`bonus` · `awaiting` / `awaiting_deposit`→`credit` · `real` / `real_deposit`→`deposit`
@@ -100,9 +102,9 @@ balance (main) = real_deposit + bonus + mup
 | `wallet.real_deposit` | الإيداع الحقيقي فقط |
 | `wallet.bonus` | البونص |
 | `wallet.mup` | MUP |
-| `wallet.credit` / `awaiting` | كريديت (منفصل) |
-| `wallet.total` / `money.balance` | **المجموع للتداول** (= `balance` في DB) |
-| `wallet.total_all_wallets` | مجموع + كريديت |
+| `wallet.credit` / `awaiting` | كريديت (مشمول في رصيد التداول) |
+| `wallet.total` / `money.balance` | **المجموع للتداول** = real + bonus + mup + credit |
+| `wallet.total_all_wallets` | نفس `total` (credit مشمول الآن) |
 
 ---
 
@@ -397,14 +399,14 @@ export interface SetWalletRequest {
 
 ## 10. خصم / إضافة الرصيد (سحب، تحويل، **إغلاق صفقة**)
 
-أي تغيير على **رصيد التداول** (`balance` = مجموع المحافظ الثلاث) يمر عبر `applyMainWalletDelta`:
+أي تغيير على **رصيد التداول** (`balance` = مجموع المحافظ الأربعة) يمر عبر `applyMainWalletDelta`:
 
 | الحركة | السلوك |
 |--------|--------|
 | **زيادة** (ربح صفقة، إيداع للرصيد) | تُضاف إلى `real_deposit` ثم `balance` يُحدَّث |
-| **نقص** (خسارة، سحب، فتح صفقة) | خصم بالترتيب: `real_deposit` → `mup` → `bonus` |
+| **نقص** (خسارة، سحب، فتح صفقة) | خصم بالترتيب: `real_deposit` → `mup` → `bonus` → `credit` |
 
-**Credit** لا يدخل في هذه العمليات.
+**Credit** يدخل الآن في عمليات التداول (يُخصم أخيراً بعد المحافظ الرئيسية).
 
 مسارات إغلاق الصفقة المحدّثة: `TradeService::closeTrade`, `Position` (SL/TP), `tradeAddBalance` / `tradeMinusBalance`, `admin/Trading`, `CRM/Trading`, `User/Trading`.
 

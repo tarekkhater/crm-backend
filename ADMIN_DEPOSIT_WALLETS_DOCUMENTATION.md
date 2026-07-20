@@ -12,11 +12,11 @@
 | `real_deposit` | Real deposit wallet only |
 | `bonus` | Bonus wallet |
 | `mup` | MUP wallet (replaces `fake`) |
-| `balance` | **Sum:** `real_deposit + bonus + mup` (auto-synced) |
-| `awaiting_deposit` | Credit (separate, not in `balance`) |
+| `awaiting_deposit` | Credit wallet |
+| `balance` | **Sum:** `real_deposit + bonus + mup + awaiting_deposit` (auto-synced) |
 
 ```
-main_balance = real_deposit + bonus + mup
+main_balance = real_deposit + bonus + mup + credit(awaiting_deposit)
 balance column = main_balance
 ```
 
@@ -38,10 +38,14 @@ balance column = main_balance
 | type | Storage | Counts in `balance`? |
 |------|---------|-------------------|
 | `deposit` + status=1 | `real_deposit` | Yes |
-| `deposit` + status=0 | `awaiting_deposit` | No |
-| `credit` | `awaiting_deposit` | No |
+| `deposit` + status=0 | `awaiting_deposit` | **Yes** |
+| `credit` | `awaiting_deposit` | **Yes** |
 | `bonus` | `bonus` | Yes |
 | `mup` | `mup` | Yes |
+
+> **Credit is now part of trading balance.** All wallet types affect `balance`.
+
+Debit order (trading loss / withdrawal): `real_deposit` → `mup` → `bonus` → `credit`
 
 Aliases: `fake`→`mup`, `awaiting_deposit`→`credit`, `bouns`→`bonus`
 
@@ -57,6 +61,7 @@ Aliases: `fake`→`mup`, `awaiting_deposit`→`credit`, `bouns`→`bonus`
 
 - `2026_06_03_000005_add_real_deposit_and_sync_balance.php`
 - `2026_06_03_000006_drop_fake_from_info_trade_users.php`
+- `2026_07_20_000001_sync_balance_include_credit_info_trade_users.php` — يُضيف `awaiting_deposit` إلى `balance` للسجلات القديمة
 
 ```bash
 php artisan migrate --force
