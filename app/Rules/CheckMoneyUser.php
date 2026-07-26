@@ -3,7 +3,7 @@
 namespace App\Rules;
 
 use Illuminate\Contracts\Validation\Rule;
-use Illuminate\Support\Facades\Hash;
+use App\Services\Users\UserWalletService;
 
 class CheckMoneyUser implements Rule
 {
@@ -28,7 +28,10 @@ class CheckMoneyUser implements Rule
     {
         $user = AuthApi();
         $user->load('userInfo');
-        return $user->userInfo->balance >= $value;
+        if (! $user || ! $user->userInfo) {
+            return false;
+        }
+        return UserWalletService::mainBalance($user->userInfo) >= (float) $value;
     }
 
     /**

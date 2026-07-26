@@ -65,7 +65,8 @@ class BalanceUser
         // قيمة الصفقة
         // $trade_amount = (($request->lot * $request->amount) * $request->opening_price) / $request->leverage;
         
-        if ($mainBalance <= $request->total) {
+        $freeMargin = $mainBalance - $totalTradeAmount;
+        if ($freeMargin < (float) $request->total) {
             $response = [
                 "message"   =>'The Current balance Trade.',
                 "status"=>422,
